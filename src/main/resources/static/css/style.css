@@ -379,6 +379,23 @@ code {
   padding: 44px 0 6px;
 }
 
+/* 每页顶部的「返回上一级」 */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ink-dim);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.back-link:hover {
+  color: var(--accent);
+}
+
 .page-title {
   font-size: clamp(1.7rem, 5vw, 2.2rem);
   letter-spacing: -0.01em;

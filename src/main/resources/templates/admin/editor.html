@@ -7,6 +7,7 @@
 <main class="wrap wrap-wide">
   <header class="page-head">
     <div>
+      <a class="back-link" th:href="@{/admin}">← 管理</a>
       <h1 class="page-title" th:text="${mode == 'new' ? '写一篇' : '改一篇'}">写一篇</h1>
       <p class="sub">用 Markdown 写。Ctrl / ⌘ + S 保存。</p>
     </div>

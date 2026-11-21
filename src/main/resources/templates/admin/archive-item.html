@@ -7,10 +7,8 @@
 <main class="wrap">
   <header class="page-head">
     <div>
-      <p class="eyebrow">
-        <a th:href="@{/admin/archives}">档案</a> ·
-        <a th:href="${'/admin/archives/' + archive.id}" th:text="${archive.title}">档案</a>
-      </p>
+      <a class="back-link" th:href="${'/admin/archives/' + archive.id}"
+         th:text="${'← ' + archive.title}">← 档案</a>
       <h1 class="page-title">改这一条</h1>
     </div>
     <a class="quiet" th:href="${'/archive/' + archive.id + '?item=' + item.id}">看前台 →</a>

@@ -7,10 +7,10 @@
 <main class="wrap">
   <header class="page-head">
     <div>
+      <a class="back-link" th:href="@{/admin}">← 管理</a>
       <h1 class="page-title">设置</h1>
       <p class="sub">你的 ID、头像、签名，还有站点的文案和密码。</p>
     </div>
-    <a class="quiet" th:href="@{/admin}">← 回管理</a>
   </header>
 
   <p class="banner" th:if="${param.ok != null}">

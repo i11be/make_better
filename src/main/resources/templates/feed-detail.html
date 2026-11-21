@@ -6,6 +6,7 @@
 
 <main class="wrap">
   <article class="post post-detail">
+    <a class="back-link" th:href="@{/feed}">← 动态</a>
     <header class="post-head">
       <img class="post-avatar" th:if="${profile != null and !#strings.isEmpty(profile.avatarPath)}"
            th:src="${profile.avatarUrl}" alt="" />
@@ -28,9 +29,8 @@
     </div>
 
     <footer class="post-foot">
-      <a class="quiet" th:href="@{/feed}">← 回动态</a>
       <form th:if="${user != null}" th:action="${'/feed/' + entry.id + '/delete'}" method="post"
-            class="inline push-right" data-confirm="删掉这条动态？配图也会一起删。">
+            class="inline" data-confirm="删掉这条动态？配图也会一起删。">
         <button type="submit" class="linklike danger">删掉这条</button>
       </form>
     </footer>

@@ -7,7 +7,7 @@
 <main class="wrap wrap-wide">
   <header class="page-head">
     <div>
-      <p class="eyebrow"><a th:href="@{/archive}">档案</a></p>
+      <a class="back-link" th:href="@{/archive}">← 档案</a>
       <h1 class="page-title" th:text="${archive.title}">档案标题</h1>
       <p class="sub" th:if="${!#strings.isEmpty(archive.summary)}" th:text="${archive.summary}">简介</p>
     </div>

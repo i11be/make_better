@@ -6,6 +6,7 @@
 
 <main class="wrap">
   <article class="entry">
+    <a class="back-link" th:href="${kind.path}" th:text="${'← ' + kind.label}">← 学习</a>
     <header class="entry-head">
       <p class="eyebrow">
         <a th:href="${kind.path}" th:text="${kind.label}">学习</a>
@@ -26,7 +27,6 @@
     <footer class="entry-foot">
       <a class="btn btn-small btn-ghost" th:if="${user != null}"
          th:href="@{/admin/entries/{id}/edit(id=entry.id)}">改这篇</a>
-      <a class="quiet" th:href="${kind.path}" th:text="${'← 回' + kind.label}">回列表</a>
       <span class="quiet quiet-dim" th:text="${'写于 ' + @viewHelper.dateTime(entry.createdAt)}">写于</span>
     </footer>
   </article>

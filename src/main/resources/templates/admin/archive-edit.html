@@ -7,7 +7,7 @@
 <main class="wrap">
   <header class="page-head">
     <div>
-      <p class="eyebrow"><a th:href="@{/admin/archives}">档案管理</a></p>
+      <a class="back-link" th:href="@{/admin/archives}">← 档案管理</a>
       <h1 class="page-title" th:text="${archive.title}">档案</h1>
     </div>
     <a class="quiet" th:href="${'/archive/' + archive.id}">看前台 →</a>
