@@ -20,7 +20,8 @@
 - **首页**：只有一张世界树图，连顶栏都没有，整页就是这棵树；五个入口（主页、动态、学习、档案、日记）挂在树枝上，不显示条目正文
 - **主页（profile）**：头像 + ID + 一句签名 + 四个统计 +「现在」，也就是原来首页那坨资料
 - **动态（feed）**：短句 + 最多 9 张图，像 QQ 空间，点图看大图
-- **学习（study）**：长笔记，标题 + Markdown 正文
+- **学习（study）**：长笔记，标题 + 分类（八股/算法，可不选）+ 一个标签 + Markdown 正文；
+  发布日期保存时自动记，列表能按分类看、按标签分组
 - **档案（archive）**：一个主题一个档案（一本书、一个游戏），里面挂很多条目，条目也是 Markdown
 - **日记（diary）**：最私密，进这一区要**再输一次密码**
 - **管理**：写、改、删、改资料、改密码
@@ -75,15 +76,15 @@ mvnw / mvnw.cmd / .mvn/  Maven Wrapper
 deploy/start.cmd, open.cmd
 src/main/java/com/makemebetter/
   config/                SecurityConfig、WebConfig
-  domain/                User、Entry、EntryKind、EntryImage、Archive、ArchiveItem、Setting
+  domain/                User、Entry、EntryKind、StudyCategory、EntryImage、Archive、ArchiveItem、Setting
   repository/            JPA 仓储（唯一写查询的地方）
-  service/               EntryService、FeedService、ArchiveService、SettingService、
+  service/               EntryService、StudyService、FeedService、ArchiveService、SettingService、
                          FileStorage（落盘）、ImageTools（裁图/缩略图）、DiaryGate、MarkdownService、ViewHelper
   web/                   控制器（Auth/Home/Entry/Feed/Diary/Archive/File/Admin·AdminArchive·AdminSettings）、
                          两个拦截器、GlobalModelAttributes、form/
 src/main/resources/
   application*.yml       通用 / dev(H2) / mysql
-  db/migration/          Flyway：V1__init.sql、V2__profile_feed_archive.sql
+  db/migration/          Flyway：V1__init.sql、V2__profile_feed_archive.sql、V3__study_category.sql
   templates/             fragments/ 公共片段、archive/ 档案页、admin/ 后台
   static/css/style.css   全站样式（唯一 CSS 文件）
   static/js/app.js       主题切换、编辑器、发动态选图、大图查看
@@ -93,7 +94,10 @@ src/test/java/           集成测试（见第 8 节）
 ## 5. 数据模型（Flyway 管）
 
 - `users` — `id, username(=主页 ID), password_hash, diary_hash, avatar_path, bio, created_at`；全站只允许一行
-- `entries` — `id, kind(study|feed|diary), title, body_md, mood, tags, entry_date, created_at, updated_at`
+- `entries` — `id, kind(study|feed|diary), title, body_md, mood, tags, category, entry_date, created_at, updated_at`
+  - 学习的 `category` 存 `bagu` / `algo`，可空（= 未分类）；加分类只改 `StudyCategory` 枚举
+  - 学习的 `tags` 只存一个标签；心情只有动态/日记用
+  - 学习的 `entry_date` = 发布那天，编辑时不动
   - 动态的 `title` 由正文第一行自动生成，`mood/tags` 留空
   - `kind` 用 VARCHAR + CHECK（不用 MySQL ENUM），为了同一份脚本能在 H2 上跑
 - `entry_images` — `id, entry_id(FK, ON DELETE CASCADE), path, width, height, sort`

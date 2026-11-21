@@ -42,8 +42,8 @@
       </td>
       <td><span class="chip" th:classappend="${'chip-' + e.kind.code}" th:text="${e.kind.label}">学习</span></td>
       <td class="td-actions">
-        <a class="quiet" th:href="@{/admin/entries/{id}/edit(id=e.id)}">改</a>
-        <form th:action="@{/admin/entries/{id}/delete(id=e.id)}" method="post" class="inline"
+        <a class="quiet" th:href="@{/admin/entries/{id}/edit(id=${e.id})}">改</a>
+        <form th:action="@{/admin/entries/{id}/delete(id=${e.id})}" method="post" class="inline"
               th:attr="data-confirm=${'删掉「' + e.title + '」？这个动作不能撤回。'}">
           <button type="submit" class="linklike danger">删</button>
         </form>

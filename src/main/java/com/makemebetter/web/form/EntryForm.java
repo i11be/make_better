@@ -14,6 +14,9 @@ public class EntryForm {
     private String mood = "";
     private String tags = "";
 
+    /** 学习的分类，其它类型留空 */
+    private String category = "";
+
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate entryDate = LocalDate.now();
 
@@ -69,6 +72,14 @@ public class EntryForm {
 
     public void setTags(String tags) {
         this.tags = tags;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
     }
 
     public LocalDate getEntryDate() {

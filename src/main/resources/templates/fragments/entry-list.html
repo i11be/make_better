@@ -17,5 +17,23 @@
     </li>
   </ol>
 </th:block>
+
+<!-- 学习列表的一条：分类小标 + 标题 + 摘要，标签单独一行，能点着筛 -->
+<th:block th:fragment="studyItem(e, catCode, showTag)">
+  <li class="item">
+    <a class="item-link" th:href="${'/study/' + e.id}">
+      <span class="item-meta">
+        <time th:datetime="${e.entryDate}" th:text="${@viewHelper.date(e.entryDate)}">2026年11月16日</time>
+        <span class="chip chip-cat" th:if="${not #strings.isEmpty(e.category)}"
+              th:text="${@viewHelper.categoryLabel(e.category)}">八股</span>
+      </span>
+      <span class="item-title" th:text="${e.title}">标题</span>
+    </a>
+    <p class="item-tags" th:if="${showTag and not #strings.isEmpty(e.tags)}">
+      <a class="tag" th:href="@{/study(cat=${catCode}, tag=${e.tags}, sort='tag')}"
+         th:text="${'#' + e.tags}">#Java</a>
+    </p>
+  </li>
+</th:block>
 </body>
 </html>

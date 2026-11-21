@@ -2,6 +2,7 @@ package com.makemebetter.web;
 
 import com.makemebetter.domain.Entry;
 import com.makemebetter.domain.EntryKind;
+import com.makemebetter.domain.StudyCategory;
 import com.makemebetter.service.EntryService;
 import com.makemebetter.service.MarkdownService;
 import com.makemebetter.service.ViewHelper;
@@ -50,12 +51,17 @@ public class AdminController {
 
     // ---------- 新建 ----------
 
+    /** 带 kind 进来就是「只能写这一栏」（学习页的写一篇）；不带 kind 才给三选一 */
     @GetMapping("/new")
-    public String createForm(@RequestParam(name = "kind", defaultValue = "study") String kind, Model model) {
+    public String createForm(@RequestParam(name = "kind", required = false) String kind, Model model) {
+        boolean picker = kind == null || kind.isBlank();
         model.addAttribute("title", "写一篇");
         model.addAttribute("mode", "new");
+        model.addAttribute("picker", picker);
+        model.addAttribute("kinds", EntryKind.values());
+        model.addAttribute("categories", StudyCategory.values());
         model.addAttribute("formAction", "/admin/entries");
-        model.addAttribute("form", EntryForm.forKind(kind));
+        model.addAttribute("form", EntryForm.forKind(picker ? EntryKind.STUDY.getCode() : kind));
         return "admin/editor";
     }
 
@@ -66,8 +72,12 @@ public class AdminController {
             return editorWithError(model, "new", form, error);
         }
         EntryKind kind = EntryKind.fromCode(form.getKind());
+        boolean study = kind == EntryKind.STUDY;
         Entry saved = entries.create(kind, form.getTitle().strip(), safe(form.getBodyMd()),
-                safe(form.getMood()), viewHelper.normalizeTags(form.getTags()), entryDate(form.getEntryDate()));
+                study ? "" : safe(form.getMood()),
+                tagsOf(form, study),
+                study ? categoryOf(form.getCategory()) : "",
+                study ? LocalDate.now() : entryDate(form.getEntryDate()));
         return "redirect:" + kind.getPath() + "/" + saved.getId() + "?ok=saved";
     }
 
@@ -78,6 +88,9 @@ public class AdminController {
         Entry entry = entries.find(id).orElseThrow(() -> notFound());
         model.addAttribute("title", "改一篇");
         model.addAttribute("mode", "edit");
+        model.addAttribute("picker", false);
+        model.addAttribute("kinds", EntryKind.values());
+        model.addAttribute("categories", StudyCategory.values());
         model.addAttribute("formAction", "/admin/entries/" + entry.getId());
         model.addAttribute("viewUrl", entry.getKind().getPath() + "/" + entry.getId());
         model.addAttribute("form", toForm(entry));
@@ -92,8 +105,13 @@ public class AdminController {
             return editorWithError(model, "edit", form, error);
         }
         EntryKind kind = EntryKind.fromCode(form.getKind());
+        boolean study = kind == EntryKind.STUDY;
         entries.update(entry, kind, form.getTitle().strip(), safe(form.getBodyMd()),
-                safe(form.getMood()), viewHelper.normalizeTags(form.getTags()), entryDate(form.getEntryDate()));
+                study ? "" : safe(form.getMood()),
+                tagsOf(form, study),
+                study ? categoryOf(form.getCategory()) : "",
+                // 学习的日期是发布那天，编辑时不动
+                study ? entry.getEntryDate() : entryDate(form.getEntryDate()));
         return "redirect:" + kind.getPath() + "/" + entry.getId() + "?ok=saved";
     }
 
@@ -126,6 +144,9 @@ public class AdminController {
     private String editorWithError(Model model, String mode, EntryForm form, String error) {
         model.addAttribute("title", "new".equals(mode) ? "写一篇" : "改一篇");
         model.addAttribute("mode", mode);
+        model.addAttribute("picker", false);
+        model.addAttribute("kinds", EntryKind.values());
+        model.addAttribute("categories", StudyCategory.values());
         model.addAttribute("error", error);
         model.addAttribute("formAction", "new".equals(mode) ? "/admin/entries" : "/admin/entries/" + form.getId());
         if (!"new".equals(mode) && form.getId() != null) {
@@ -143,8 +164,25 @@ public class AdminController {
         form.setBodyMd(entry.getBodyMd());
         form.setMood(entry.getMood());
         form.setTags(entry.getTags());
+        form.setCategory(entry.getCategory() == null ? "" : entry.getCategory());
         form.setEntryDate(entry.getEntryDate());
         return form;
+    }
+
+    /** 学习只收一个标签：逗号后面的一律不要；其它类型还是按逗号拆 */
+    private String tagsOf(EntryForm form, boolean study) {
+        if (!study) {
+            return viewHelper.normalizeTags(form.getTags());
+        }
+        String raw = safe(form.getTags()).strip();
+        String first = raw.split("[,，]")[0].strip();
+        return first.length() > 30 ? first.substring(0, 30) : first;
+    }
+
+    /** 分类只认枚举里的 code，认不出来就当没分类 */
+    private String categoryOf(String code) {
+        StudyCategory category = StudyCategory.fromCode(code);
+        return category == null ? "" : category.getCode();
     }
 
     private Map<String, Long> counts() {

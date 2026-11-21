@@ -1,5 +1,6 @@
 package com.makemebetter.service;
 
+import com.makemebetter.domain.StudyCategory;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -67,6 +68,11 @@ public class ViewHelper {
     /** 把表单里的标签规整成 "a, b, c" */
     public String normalizeTags(String raw) {
         return String.join(", ", tags(raw));
+    }
+
+    /** 学习的分类：code → 中文，认不出来返回空串 */
+    public String categoryLabel(String code) {
+        return StudyCategory.labelOf(code);
     }
 
     /** 动态配图的缩略图路径（约定：同名 + _s.jpg） */

@@ -16,9 +16,16 @@
         <span class="quiet" th:text="${@viewHelper.weekday(entry.entryDate)}">星期一</span>
       </p>
       <h1 class="entry-title" th:text="${entry.title}">标题</h1>
-      <p class="meta-line" th:if="${not #strings.isEmpty(entry.mood) or not #lists.isEmpty(@viewHelper.tags(entry.tags))}">
+      <p class="meta-line" th:if="${not #strings.isEmpty(entry.category) or not #strings.isEmpty(entry.mood) or not #strings.isEmpty(entry.tags)}">
+        <span class="chip chip-cat" th:if="${not #strings.isEmpty(entry.category)}"
+              th:text="${@viewHelper.categoryLabel(entry.category)}">八股</span>
         <span class="chip" th:if="${not #strings.isEmpty(entry.mood)}" th:text="${entry.mood}">平静</span>
-        <span class="tag" th:each="t : ${@viewHelper.tags(entry.tags)}" th:text="${'#' + t}">#标签</span>
+        <th:block th:if="${kind.name() == 'STUDY'}">
+          <span class="tag" th:if="${not #strings.isEmpty(entry.tags)}" th:text="${'#' + entry.tags}">#Java</span>
+        </th:block>
+        <th:block th:unless="${kind.name() == 'STUDY'}">
+          <span class="tag" th:each="t : ${@viewHelper.tags(entry.tags)}" th:text="${'#' + t}">#标签</span>
+        </th:block>
       </p>
     </header>
 
@@ -26,7 +33,7 @@
 
     <footer class="entry-foot">
       <a class="btn btn-small btn-ghost" th:if="${user != null}"
-         th:href="@{/admin/entries/{id}/edit(id=entry.id)}">改这篇</a>
+         th:href="@{/admin/entries/{id}/edit(id=${entry.id})}">改这篇</a>
       <span class="quiet quiet-dim" th:text="${'写于 ' + @viewHelper.dateTime(entry.createdAt)}">写于</span>
     </footer>
   </article>

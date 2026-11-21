@@ -578,6 +578,123 @@ main {
   content: "· ";
 }
 
+/* ---------- 学习：筛选条、标签分组 ---------- */
+
+.filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.filters + .filters {
+  margin-bottom: 22px;
+}
+
+.filter-label {
+  margin-right: 2px;
+  font-size: 12.5px;
+  color: var(--ink-dim);
+}
+
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg-soft);
+  color: var(--ink-soft);
+  font-size: 13px;
+  text-decoration: none;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.filter-pill:hover {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+}
+
+.filter-pill.on {
+  color: var(--ink);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.filter-count {
+  font-size: 11.5px;
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.filter-pill.on .filter-count {
+  color: var(--accent);
+}
+
+.filter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  padding: 5px 12px;
+  border: 1px dashed color-mix(in srgb, var(--accent) 55%, transparent);
+  border-radius: 999px;
+  color: var(--accent);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.tag-group + .tag-group {
+  margin-top: 26px;
+}
+
+.group-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0 2px;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+}
+
+.group-head::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+}
+
+.group-count {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-dim);
+}
+
+.item-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 13px;
+}
+
+.item-tags .tag {
+  text-decoration: none;
+}
+
+.item-tags .tag:hover {
+  color: var(--accent);
+}
+
+.chip-cat {
+  border-color: color-mix(in srgb, var(--accent) 42%, transparent);
+  background: transparent;
+  color: var(--accent);
+}
+
 /* ---------- 文章 ---------- */
 
 .entry {
@@ -1588,6 +1705,69 @@ body:has(.gate-hero) .foot {
   gap: 14px;
 }
 
+.row2 {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 14px;
+}
+
+/* 分类：三个胶囊，选中状态靠 :has 认 radio */
+.cat-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.cat-opt {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg-soft);
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.cat-opt input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+}
+
+.cat-opt:hover {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+}
+
+.cat-opt:has(input:checked) {
+  color: var(--ink);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* 隐藏的 radio 别自己画焦点圈，焦点交给整颗胶囊 */
+.cat-opt input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.cat-opt:focus-within {
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.auto-date {
+  margin-top: -4px;
+  font-size: 12.5px;
+  color: var(--ink-dim);
+}
+
 .editor-body {
   display: grid;
   gap: 14px;
@@ -1730,6 +1910,7 @@ body:has(.gate-hero) .foot {
   }
 
   .row3,
+  .row2,
   .kind-picker {
     grid-template-columns: 1fr;
   }

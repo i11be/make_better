@@ -38,6 +38,10 @@ public class Entry {
     @Column(nullable = false, length = 200)
     private String tags;
 
+    /** 学习的分类（StudyCategory 的 code），其它类型为空 */
+    @Column(length = 32)
+    private String category;
+
     /** 事情发生的那天，不是录入时间 */
     @Column(name = "entry_date", nullable = false)
     private LocalDate entryDate;
@@ -51,12 +55,14 @@ public class Entry {
     protected Entry() {
     }
 
-    public Entry(EntryKind kind, String title, String bodyMd, String mood, String tags, LocalDate entryDate) {
+    public Entry(EntryKind kind, String title, String bodyMd, String mood, String tags, String category,
+                 LocalDate entryDate) {
         this.kind = kind;
         this.title = title;
         this.bodyMd = bodyMd;
         this.mood = mood;
         this.tags = tags;
+        this.category = category;
         this.entryDate = entryDate;
     }
 
@@ -74,12 +80,14 @@ public class Entry {
         updatedAt = LocalDateTime.now();
     }
 
-    public void update(EntryKind kind, String title, String bodyMd, String mood, String tags, LocalDate entryDate) {
+    public void update(EntryKind kind, String title, String bodyMd, String mood, String tags, String category,
+                       LocalDate entryDate) {
         this.kind = kind;
         this.title = title;
         this.bodyMd = bodyMd;
         this.mood = mood;
         this.tags = tags;
+        this.category = category;
         this.entryDate = entryDate;
     }
 
@@ -105,6 +113,10 @@ public class Entry {
 
     public String getTags() {
         return tags;
+    }
+
+    public String getCategory() {
+        return category;
     }
 
     public LocalDate getEntryDate() {

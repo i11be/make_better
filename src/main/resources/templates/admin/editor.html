@@ -8,7 +8,7 @@
   <header class="page-head">
     <div>
       <a class="back-link" th:href="@{/admin}">← 管理</a>
-      <h1 class="page-title" th:text="${mode == 'new' ? '写一篇' : '改一篇'}">写一篇</h1>
+      <h1 class="page-title" th:text="${form.kind == 'study' ? (mode == 'new' ? '写学习笔记' : '改学习笔记') : (mode == 'new' ? '写一篇' : '改一篇')}">写一篇</h1>
       <p class="sub">用 Markdown 写。Ctrl / ⌘ + S 保存。</p>
     </div>
     <a class="quiet" th:if="${viewUrl != null}" th:href="${viewUrl}">看这篇 →</a>
@@ -19,20 +19,49 @@
   <form th:action="${formAction}" th:object="${form}" method="post" class="editor" id="editor-form">
     <input type="hidden" name="kind" id="kind-input" th:value="*{kind}" />
 
-    <div class="kind-picker" role="group" aria-label="写在哪一栏">
-      <button type="button" class="kind-opt" th:each="k : ${kinds}"
-              th:classappend="${form.kind == k.code} ? 'on'" th:attr="data-kind=${k.code}">
+    <!-- 只有从「管理 → 写一篇」进来才给选栏，从学习/动态/日记进来就锁死 -->
+    <nav class="kind-picker" th:if="${picker}" aria-label="写在哪一栏">
+      <a class="kind-opt" th:each="k : ${kinds}" th:href="@{/admin/new(kind=k.code)}"
+         th:classappend="${form.kind == k.code} ? 'on'">
         <span th:text="${k.label}">学习</span>
         <small th:text="${k.hint}">说明</small>
-      </button>
-    </div>
+      </a>
+    </nav>
 
     <label class="field">
       <span>标题</span>
       <input th:field="*{title}" maxlength="120" required placeholder="一句话说清这篇写了什么" />
     </label>
 
-    <div class="row3">
+    <!-- 学习：分类 + 一个标签，日期自动记 -->
+    <th:block th:if="${form.kind == 'study'}">
+      <div class="row2">
+        <div class="field">
+          <span>分类</span>
+          <div class="cat-picker">
+            <label class="cat-opt">
+              <input type="radio" th:field="*{category}" value="" />
+              <span>不分类</span>
+            </label>
+            <label class="cat-opt" th:each="c : ${categories}">
+              <input type="radio" th:field="*{category}" th:value="${c.code}" />
+              <span th:text="${c.label}">八股</span>
+            </label>
+          </div>
+        </div>
+        <label class="field">
+          <span>标签</span>
+          <input th:field="*{tags}" maxlength="30" placeholder="一个词，比如 Java / 二分" />
+          <small>想一个以后好找的词，只填一个。</small>
+        </label>
+      </div>
+      <p class="auto-date" th:if="${mode == 'new'}">发布日期：保存时自动记今天。</p>
+      <p class="auto-date" th:unless="${mode == 'new'}"
+         th:text="${'发布日期：' + @viewHelper.date(form.entryDate) + '，发布那天记下的，编辑不改。'}">发布日期</p>
+    </th:block>
+
+    <!-- 动态 / 日记：日期、心情、标签，和以前一样 -->
+    <div class="row3" th:if="${form.kind != 'study'}">
       <label class="field">
         <span>日期</span>
         <input type="date" th:field="*{entryDate}" required />
@@ -76,7 +105,7 @@
   </form>
 
   <form id="delete-form" th:if="${mode == 'edit'}"
-        th:action="@{/admin/entries/{id}/delete(id=form.id)}" method="post"
+        th:action="@{/admin/entries/{id}/delete(id=${form.id})}" method="post"
         th:attr="data-confirm=${'删掉「' + form.title + '」？这个动作不能撤回。'}"></form>
 </main>
 

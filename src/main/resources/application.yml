@@ -26,6 +26,9 @@ spring:
 
 server:
   port: 8090
+  # 学习笔记正文放宽到 16MB，和 entries.body_md 的 MEDIUMTEXT 对上
+  tomcat:
+    max-http-form-post-size: 16MB
   error:
     include-message: always
     whitelabel:

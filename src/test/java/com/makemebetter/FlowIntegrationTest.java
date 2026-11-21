@@ -181,7 +181,8 @@ class FlowIntegrationTest {
                         .param("bodyMd", "这是 **粗体** 和 `代码`")
                         .param("entryDate", "2026-01-02")
                         .param("mood", "专注")
-                        .param("tags", "Java, 测试"))
+                        .param("category", "bagu")
+                        .param("tags", "二分"))
                 .andExpect(status().is3xxRedirection())
                 .andReturn();
 
@@ -193,7 +194,60 @@ class FlowIntegrationTest {
         mvc.perform(get("/study/" + studyId).session(session))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("<strong>粗体</strong>")))
-                .andExpect(content().string(containsString("<code>代码</code>")));
+                .andExpect(content().string(containsString("<code>代码</code>")))
+                .andExpect(content().string(containsString("八股")))
+                .andExpect(content().string(containsString("#二分")))
+                // 「改这篇」的链接得是真实 id，不能是字面量 entry.id
+                .andExpect(content().string(containsString("/admin/entries/" + studyId + "/edit")))
+                // 学习里没有心情
+                .andExpect(content().string(not(containsString("专注"))));
+
+        // 13.2 长正文不许被截断（TEXT 是 64KB，这里写 90KB）
+        String longBody = "长".repeat(30000) + "尾巴标记";
+        MvcResult longOne = mvc.perform(post("/admin/entries").session(session).with(csrf())
+                        .param("kind", "study")
+                        .param("title", "长文测试")
+                        .param("bodyMd", longBody))
+                .andExpect(status().is3xxRedirection())
+                .andReturn();
+        String longLocation = longOne.getResponse().getRedirectedUrl();
+        assertNotNull(longLocation);
+        String longId = longLocation.replaceAll("^/study/(\\d+).*$", "$1");
+
+        mvc.perform(get("/study/" + longId).session(session))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("尾巴标记")));
+
+        // 13.1 学习列表：分类筛选、标签分组、写一篇锁死类型
+        mvc.perform(get("/study").session(session))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("测试学习条目")))
+                .andExpect(content().string(containsString("按标签")));
+
+        mvc.perform(get("/study?cat=bagu").session(session))
+                .andExpect(content().string(containsString("测试学习条目")));
+
+        mvc.perform(get("/study?cat=algo").session(session))
+                .andExpect(content().string(not(containsString("测试学习条目"))));
+
+        mvc.perform(get("/study?sort=tag").session(session))
+                .andExpect(content().string(containsString("#二分")))
+                .andExpect(content().string(containsString("按标签")));
+
+        mvc.perform(get("/study?tag=二分").session(session))
+                .andExpect(content().string(containsString("测试学习条目")));
+
+        // 从学习进来只能写学习：没有三选一，只有分类，也没有心情那一格
+        mvc.perform(get("/admin/new?kind=study").session(session))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("kind-picker"))))
+                .andExpect(content().string(containsString("分类")))
+                .andExpect(content().string(not(containsString("name=\"mood\""))));
+
+        // 从管理进来还是能选
+        mvc.perform(get("/admin/new").session(session))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("kind-picker")));
 
         // 14. 日记：没解锁被挡，解锁后能读
         mvc.perform(get("/diary").session(session))

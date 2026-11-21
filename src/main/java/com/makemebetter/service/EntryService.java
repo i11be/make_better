@@ -3,6 +3,7 @@ package com.makemebetter.service;
 import com.makemebetter.domain.Entry;
 import com.makemebetter.domain.EntryImage;
 import com.makemebetter.domain.EntryKind;
+import com.makemebetter.domain.StudyCategory;
 import com.makemebetter.repository.EntryImageRepository;
 import com.makemebetter.repository.EntryRepository;
 import org.springframework.data.domain.PageRequest;
@@ -60,15 +61,16 @@ public class EntryService {
     }
 
     @Transactional
-    public Entry create(EntryKind kind, String title, String bodyMd, String mood, String tags, LocalDate entryDate) {
-        return repository.save(new Entry(kind, title, bodyMd, mood, tags, entryDate));
+    public Entry create(EntryKind kind, String title, String bodyMd, String mood, String tags, String category,
+                        LocalDate entryDate) {
+        return repository.save(new Entry(kind, title, bodyMd, mood, tags, category, entryDate));
     }
 
     /** 动态：文字可以为空，但至少要有一张图 */
     @Transactional
     public Entry createPost(String body, List<FileStorage.Stored> photos, LocalDate entryDate) {
         String title = summarize(body);
-        Entry entry = repository.save(new Entry(EntryKind.FEED, title, body, "", "", entryDate));
+        Entry entry = repository.save(new Entry(EntryKind.FEED, title, body, "", "", "", entryDate));
         if (photos != null) {
             int sort = 0;
             for (FileStorage.Stored photo : photos) {
@@ -80,8 +82,8 @@ public class EntryService {
 
     @Transactional
     public Entry update(Entry entry, EntryKind kind, String title, String bodyMd, String mood, String tags,
-                        LocalDate entryDate) {
-        entry.update(kind, title, bodyMd, mood, tags, entryDate);
+                        String category, LocalDate entryDate) {
+        entry.update(kind, title, bodyMd, mood, tags, category, entryDate);
         return repository.save(entry);
     }
 
@@ -127,9 +129,9 @@ public class EntryService {
                 > 不用写得好看。先写下来。
 
                 把这条改成你自己的第一句话吧，或者直接删掉它。
-                """, "开始", "开始, 记录", today);
+                """, "开始", "开始", StudyCategory.BAGU.getCode(), today);
 
         create(EntryKind.FEED, "今天，站点刚建好", "一件事从零开始的时候，总是最轻的。\n\n今天做完了：把这块地方搭起来。",
-                "平静", "第一天", today);
+                "平静", "第一天", "", today);
     }
 }
