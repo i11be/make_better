@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<body>
+<th:block th:fragment="footer">
+  <footer class="foot">
+    <div class="wrap foot-inner">
+      <span th:text="${'© ' + year + ' ' + (profile != null ? profile.username : site['owner_name'])}">© 我</span>
+      <th:block th:if="${user != null}">
+        <span class="sep">·</span>
+        <a th:href="@{/admin}">管理</a>
+        <span class="sep">·</span>
+        <a th:href="@{/admin/settings}">设置</a>
+        <span class="sep">·</span>
+        <form th:action="@{/logout}" method="post" class="inline">
+          <button type="submit" class="linklike">退出</button>
+        </form>
+      </th:block>
+      <th:block th:if="${user == null}">
+        <span class="sep">·</span>
+        <a th:href="@{/login}">登录</a>
+      </th:block>
+    </div>
+  </footer>
+  <script src="/js/app.js" defer></script>
+</th:block>
+</body>
+</html>

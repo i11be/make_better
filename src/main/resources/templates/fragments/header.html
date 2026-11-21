@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<body>
+<header class="head" th:fragment="header">
+  <div class="wrap head-inner">
+    <a class="brand" th:href="@{/}">
+      <img class="brand-avatar" th:if="${profile != null and !#strings.isEmpty(profile.avatarPath)}"
+           th:src="${profile.avatarUrl}" alt="" />
+      <span class="brand-avatar brand-initial"
+            th:if="${profile == null or #strings.isEmpty(profile.avatarPath)}" th:text="${initial}">M</span>
+      <span class="brand-text" th:text="${profile != null ? profile.username : site['site_title']}">me</span>
+    </a>
+    <nav class="nav" aria-label="主导航">
+      <a th:href="@{/feed}" th:classappend="${#strings.startsWith(currentPath, '/feed')} ? 'on'">动态</a>
+      <a th:href="@{/study}" th:classappend="${#strings.startsWith(currentPath, '/study')} ? 'on'">学习</a>
+      <a th:href="@{/archive}" th:classappend="${#strings.startsWith(currentPath, '/archive')} ? 'on'">档案</a>
+      <a th:href="@{/diary}" th:classappend="${#strings.startsWith(currentPath, '/diary')} ? 'on'">日记</a>
+    </nav>
+    <div class="head-tools">
+      <a class="tool" th:if="${user != null}" th:href="@{/admin}" title="管理" aria-label="管理">✎</a>
+      <span th:replace="~{fragments/theme-switch :: toggle}"></span>
+    </div>
+  </div>
+</header>
+</body>
+</html>

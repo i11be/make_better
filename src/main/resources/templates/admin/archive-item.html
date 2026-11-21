@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN" data-theme="auto">
+<head th:replace="~{fragments/head :: head(${title})}"></head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="wrap">
+  <header class="page-head">
+    <div>
+      <p class="eyebrow">
+        <a th:href="@{/admin/archives}">档案</a> ·
+        <a th:href="${'/admin/archives/' + archive.id}" th:text="${archive.title}">档案</a>
+      </p>
+      <h1 class="page-title">改这一条</h1>
+    </div>
+    <a class="quiet" th:href="${'/archive/' + archive.id + '?item=' + item.id}">看前台 →</a>
+  </header>
+
+  <p class="banner" th:if="${param.ok != null and param.ok[0] == 'saved'}">存好了。</p>
+
+  <form th:action="${'/admin/archives/' + archive.id + '/items/' + item.id}" method="post"
+        class="editor" id="editor-form">
+    <label class="field">
+      <span>标题</span>
+      <input name="title" th:value="${item.title}" maxlength="120" required />
+    </label>
+
+    <div class="editor-body">
+      <div class="editor-main">
+        <div class="editor-tools">
+          <button type="button" class="toolbtn" data-md="**" data-placeholder="加粗">B</button>
+          <button type="button" class="toolbtn" data-md="*" data-placeholder="斜体"><em>I</em></button>
+          <button type="button" class="toolbtn" data-md="## " data-placeholder="小标题">H</button>
+          <button type="button" class="toolbtn" data-md="- " data-placeholder="一条">≡</button>
+          <button type="button" class="toolbtn" data-md="&gt; " data-placeholder="引用">❝</button>
+          <button type="button" class="toolbtn" id="preview-toggle">预览</button>
+        </div>
+        <textarea name="bodyMd" id="bodyMd" class="editor-text" spellcheck="false"
+                  th:text="${item.bodyMd}" placeholder="正文……"></textarea>
+      </div>
+      <aside class="editor-preview" id="preview" hidden>
+        <p class="preview-empty">在左边写，这里会实时显示。</p>
+      </aside>
+    </div>
+
+    <div class="editor-foot">
+      <button class="btn" type="submit">保存</button>
+      <a class="quiet" th:href="${'/admin/archives/' + archive.id}">取消</a>
+      <button type="submit" form="delete-form" class="linklike danger push-right">删掉这条</button>
+    </div>
+  </form>
+
+  <form id="delete-form" method="post"
+        th:action="${'/admin/archives/' + archive.id + '/items/' + item.id + '/delete'}"
+        th:attr="data-confirm=${'删掉「' + item.title + '」？不能撤回。'}"></form>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

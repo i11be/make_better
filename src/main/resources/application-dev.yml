@@ -1,0 +1,14 @@
+# 开发默认配置：H2 文件库，零安装，数据在 ./data/dev.mv.db
+# 换 MySQL 时启动加 --spring.profiles.active=mysql，见 README
+spring:
+  datasource:
+    url: jdbc:h2:file:./data/dev;MODE=MySQL;DATABASE_TO_LOWER=TRUE;AUTO_SERVER=TRUE
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+  flyway:
+    enabled: true
+    locations: classpath:db/migration

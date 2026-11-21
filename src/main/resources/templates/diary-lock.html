@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN" data-theme="auto">
+<head th:replace="~{fragments/head :: head(${title})}"></head>
+<body>
+
+<div class="gate-theme">
+  <span th:replace="~{fragments/theme-switch :: toggle}"></span>
+</div>
+
+<div class="gate">
+  <div class="gate-card">
+    <span class="gate-mark" aria-hidden="true">✳</span>
+    <h1 class="gate-title">日记上锁了</h1>
+    <p class="gate-sub">这一区单独加了道锁。输日记密码，或者先去看看别的地方。</p>
+
+    <p class="form-error" th:if="${error != null}" th:text="${error}">密码不对</p>
+
+    <form th:action="@{/diary/unlock}" method="post" class="stack">
+      <label class="field">
+        <span>日记密码</span>
+        <input name="password" type="password" autocomplete="off" required autofocus />
+      </label>
+      <button class="btn btn-block" type="submit">解锁</button>
+    </form>
+
+    <p class="gate-foot"><a th:href="@{/}">← 回首页</a></p>
+  </div>
+</div>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

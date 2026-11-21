@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN" data-theme="auto">
+<head th:replace="~{fragments/head :: head(${title})}"></head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="wrap wrap-wide">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title" th:text="${mode == 'new' ? '写一篇' : '改一篇'}">写一篇</h1>
+      <p class="sub">用 Markdown 写。Ctrl / ⌘ + S 保存。</p>
+    </div>
+    <a class="quiet" th:if="${viewUrl != null}" th:href="${viewUrl}">看这篇 →</a>
+  </header>
+
+  <p class="form-error" th:if="${error != null}" th:text="${error}">出错了</p>
+
+  <form th:action="${formAction}" th:object="${form}" method="post" class="editor" id="editor-form">
+    <input type="hidden" name="kind" id="kind-input" th:value="*{kind}" />
+
+    <div class="kind-picker" role="group" aria-label="写在哪一栏">
+      <button type="button" class="kind-opt" th:each="k : ${kinds}"
+              th:classappend="${form.kind == k.code} ? 'on'" th:attr="data-kind=${k.code}">
+        <span th:text="${k.label}">学习</span>
+        <small th:text="${k.hint}">说明</small>
+      </button>
+    </div>
+
+    <label class="field">
+      <span>标题</span>
+      <input th:field="*{title}" maxlength="120" required placeholder="一句话说清这篇写了什么" />
+    </label>
+
+    <div class="row3">
+      <label class="field">
+        <span>日期</span>
+        <input type="date" th:field="*{entryDate}" required />
+        <small>事情发生的那天，不是今天也没关系。</small>
+      </label>
+      <label class="field">
+        <span>心情</span>
+        <input th:field="*{mood}" maxlength="20" placeholder="平静 / 卡住了 / 有点高兴" />
+      </label>
+      <label class="field">
+        <span>标签</span>
+        <input th:field="*{tags}" placeholder="用逗号分开：Java, 英语" />
+      </label>
+    </div>
+
+    <div class="editor-body">
+      <div class="editor-main">
+        <div class="editor-tools">
+          <button type="button" class="toolbtn" data-md="**" data-placeholder="加粗">B</button>
+          <button type="button" class="toolbtn" data-md="*" data-placeholder="斜体"><em>I</em></button>
+          <button type="button" class="toolbtn" data-md="## " data-placeholder="小标题">H</button>
+          <button type="button" class="toolbtn" data-md="- " data-placeholder="一条">≡</button>
+          <button type="button" class="toolbtn" data-md="&gt; " data-placeholder="引用">❝</button>
+          <button type="button" class="toolbtn" data-md="`" data-placeholder="代码">code</button>
+          <button type="button" class="toolbtn" id="preview-toggle">预览</button>
+        </div>
+        <textarea th:field="*{bodyMd}" class="editor-text" spellcheck="false"
+                  placeholder="今天……"></textarea>
+      </div>
+      <aside class="editor-preview" id="preview" hidden>
+        <p class="preview-empty">在左边写，这里会实时显示。</p>
+      </aside>
+    </div>
+
+    <div class="editor-foot">
+      <button class="btn" type="submit">保存</button>
+      <a class="quiet" th:href="@{/admin}">取消</a>
+      <button type="submit" form="delete-form" class="linklike danger push-right"
+              th:if="${mode == 'edit'}">删掉这篇</button>
+    </div>
+  </form>
+
+  <form id="delete-form" th:if="${mode == 'edit'}"
+        th:action="@{/admin/entries/{id}/delete(id=form.id)}" method="post"
+        th:attr="data-confirm=${'删掉「' + form.title + '」？这个动作不能撤回。'}"></form>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

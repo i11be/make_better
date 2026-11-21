@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN" data-theme="auto">
+<head th:replace="~{fragments/head :: head(${title})}"></head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="wrap">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">设置</h1>
+      <p class="sub">你的 ID、头像、签名，还有站点的文案和密码。</p>
+    </div>
+    <a class="quiet" th:href="@{/admin}">← 回管理</a>
+  </header>
+
+  <p class="banner" th:if="${param.ok != null}">
+    <th:block th:switch="${param.ok[0]}">
+      <th:block th:case="'profile'">资料已更新。</th:block>
+      <th:block th:case="'saved'">存好了。</th:block>
+      <th:block th:case="'password'">登录密码换了。</th:block>
+      <th:block th:case="'diary-password'">日记密码换了，日记区已经重新上锁。</th:block>
+    </th:block>
+  </p>
+  <p class="form-error" th:if="${error != null}" th:text="${error}">出错了</p>
+
+  <section class="block">
+    <div class="block-head"><h2>个人资料</h2></div>
+    <form th:action="@{/admin/profile}" method="post" enctype="multipart/form-data" class="stack">
+      <div class="avatar-row">
+        <div class="avatar-preview">
+          <img th:if="${profile != null and !#strings.isEmpty(profile.avatarPath)}"
+               th:src="${profile.avatarUrl}" alt="" />
+          <span th:if="${profile == null or #strings.isEmpty(profile.avatarPath)}" th:text="${initial}">M</span>
+        </div>
+        <div class="avatar-actions">
+          <label class="file-btn">
+            <span>换头像</span>
+            <input type="file" name="avatar" accept="image/jpeg,image/png" hidden />
+          </label>
+          <label class="check" th:if="${profile != null and !#strings.isEmpty(profile.avatarPath)}">
+            <input type="checkbox" name="removeAvatar" value="1" /> 删掉现在的头像
+          </label>
+          <small>jpg / png，10MB 以内，会自动裁成方形。</small>
+        </div>
+      </div>
+
+      <label class="field">
+        <span>ID（主页上显示的名字）</span>
+        <input name="username" th:value="${profile != null ? profile.username : ''}" maxlength="24" required />
+        <small>2–24 个字，中文、字母、数字、下划线都可以。</small>
+      </label>
+      <label class="field">
+        <span>一句签名</span>
+        <input name="bio" th:value="${profile != null ? profile.bio : ''}" maxlength="200"
+               placeholder="不写就用站点那句" />
+      </label>
+      <button class="btn" type="submit">保存资料</button>
+    </form>
+  </section>
+
+  <section class="block">
+    <div class="block-head"><h2>站点</h2></div>
+    <form th:action="@{/admin/settings}" method="post" class="stack">
+      <label class="field">
+        <span>浏览器标签上的名字</span>
+        <input name="site_title" th:value="${site['site_title']}" maxlength="40" />
+      </label>
+      <label class="field">
+        <span>备用签名（没填个人签名时显示）</span>
+        <input name="site_tagline" th:value="${site['site_tagline']}" maxlength="80" />
+      </label>
+      <label class="field">
+        <span>落款（页脚那个名字）</span>
+        <input name="owner_name" th:value="${site['owner_name']}" maxlength="30" />
+      </label>
+      <label class="field">
+        <span>现在（Markdown，显示在首页底部）</span>
+        <textarea name="now_md" rows="4" th:text="${site['now_md']}"></textarea>
+      </label>
+      <button class="btn" type="submit">保存站点</button>
+    </form>
+  </section>
+
+  <section class="block">
+    <div class="block-head"><h2>登录密码</h2></div>
+    <form th:action="@{/admin/password}" method="post" class="stack">
+      <label class="field"><span>当前密码</span>
+        <input type="password" name="current" autocomplete="current-password" required /></label>
+      <label class="field"><span>新密码</span>
+        <input type="password" name="next" minlength="8" autocomplete="new-password" required />
+        <small>至少 8 位。</small></label>
+      <label class="field"><span>新密码（再输一次）</span>
+        <input type="password" name="next2" minlength="8" autocomplete="new-password" required /></label>
+      <button class="btn btn-ghost" type="submit">换密码</button>
+    </form>
+  </section>
+
+  <section class="block">
+    <div class="block-head"><h2>日记密码</h2></div>
+    <form th:action="@{/admin/diary-password}" method="post" class="stack">
+      <label class="field"><span>当前登录密码</span>
+        <input type="password" name="current" autocomplete="current-password" required /></label>
+      <label class="field"><span>新的日记密码</span>
+        <input type="password" name="next" minlength="4" autocomplete="new-password" required />
+        <small>至少 4 位。</small></label>
+      <label class="field"><span>新的日记密码（再输一次）</span>
+        <input type="password" name="next2" minlength="4" autocomplete="new-password" required /></label>
+      <button class="btn btn-ghost" type="submit">换日记密码</button>
+    </form>
+  </section>
+
+  <section class="block">
+    <div class="block-head"><h2>备份</h2></div>
+    <p class="sub">
+      数据 = <code>mysqldump</code> 出来的 SQL + <code>data/uploads</code> 里的图片，两样都要。
+    </p>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

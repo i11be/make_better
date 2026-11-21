@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN" data-theme="auto">
+<head th:replace="~{fragments/head :: head(${title})}"></head>
+<body>
+
+<div class="gate-theme">
+  <span th:replace="~{fragments/theme-switch :: toggle}"></span>
+</div>
+
+<div class="gate">
+  <div class="gate-card" th:classappend="${param.error != null} ? 'is-error'">
+    <p class="eyebrow">只给自己用</p>
+    <h1 class="gate-title">登录</h1>
+
+    <p class="form-error" th:if="${param.error != null}">用户名或密码不对。</p>
+    <p class="banner" th:if="${param.logout != null}">已经退出了。</p>
+
+    <form th:action="@{/login}" method="post" class="stack">
+      <label class="field">
+        <span>用户名</span>
+        <input name="username" autocomplete="username" required autofocus />
+      </label>
+      <label class="field">
+        <span>密码</span>
+        <input name="password" type="password" autocomplete="current-password" required />
+      </label>
+      <button class="btn btn-block" type="submit">进去</button>
+    </form>
+
+    <p class="gate-foot"><a th:href="@{/}">← 先回首页看看</a></p>
+  </div>
+</div>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

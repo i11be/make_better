@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN" data-theme="auto">
+<head th:replace="~{fragments/head :: head(${title})}"></head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="wrap">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">动态</h1>
+      <p class="sub">生活里的小片段，可以配图。</p>
+    </div>
+  </header>
+
+  <p class="banner" th:if="${param.ok != null and param.ok[0] == 'posted'}">发出去了。</p>
+  <p class="banner" th:if="${param.ok != null and param.ok[0] == 'deleted'}">删掉了。</p>
+  <p class="form-error" th:if="${error != null}" th:text="${error}">出错了</p>
+
+  <form class="composer" th:if="${user != null}" th:action="@{/feed}" method="post"
+        enctype="multipart/form-data">
+    <textarea name="body" rows="3" placeholder="今天……"></textarea>
+    <div class="composer-preview" id="composer-preview" hidden></div>
+    <div class="composer-foot">
+      <label class="file-btn">
+        <span>＋ 图片</span>
+        <input type="file" name="photos" id="photo-input" accept="image/jpeg,image/png" multiple hidden />
+      </label>
+      <span class="quiet" id="pick-hint">最多 9 张，单张 10MB 以内</span>
+      <button class="btn btn-small" type="submit">发布</button>
+    </div>
+  </form>
+
+  <p class="empty" th:if="${#lists.isEmpty(posts)}">还没有动态。</p>
+
+  <ol class="feed" th:unless="${#lists.isEmpty(posts)}">
+    <li class="post" th:each="p : ${posts}">
+      <header class="post-head">
+        <img class="post-avatar" th:if="${profile != null and !#strings.isEmpty(profile.avatarPath)}"
+             th:src="${profile.avatarUrl}" alt="" />
+        <span class="post-avatar post-initial" th:if="${profile == null or #strings.isEmpty(profile.avatarPath)}"
+              th:text="${initial}">M</span>
+        <div class="post-who">
+          <a class="post-name" th:href="@{/}" th:text="${profile != null ? profile.username : '我'}">我</a>
+          <time class="quiet" th:text="${@viewHelper.dateTime(p.entry.createdAt)}">时间</time>
+        </div>
+      </header>
+
+      <p class="post-body" th:if="${!#strings.isEmpty(p.entry.bodyMd)}" th:text="${p.entry.bodyMd}">正文</p>
+
+      <div class="post-grid" th:if="${not #lists.isEmpty(p.images)}"
+           th:classappend="${#lists.size(p.images) == 1} ? 'single'">
+        <a class="post-img" th:each="img : ${p.images}" href="#" data-lightbox
+           th:attr="data-full=${img.url}">
+          <img th:src="${img.thumbUrl}" alt="" loading="lazy" />
+        </a>
+      </div>
+
+      <footer class="post-foot">
+        <a class="quiet" th:href="${'/feed/' + p.entry.id}">详情</a>
+        <form th:if="${user != null}" th:action="${'/feed/' + p.entry.id + '/delete'}" method="post"
+              class="inline push-right" data-confirm="删掉这条动态？配图也会一起删。">
+          <button type="submit" class="linklike danger">删</button>
+        </form>
+      </footer>
+    </li>
+  </ol>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

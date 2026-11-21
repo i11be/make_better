@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN" data-theme="auto">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title th:text="${status == null ? '出了点问题' : status + ' · ' + (status == 404 ? '没有这一页' : '出了点问题')}">出了点问题</title>
+  <meta name="color-scheme" content="light dark" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+<div class="gate-theme">
+  <span th:replace="~{fragments/theme-switch :: toggle}"></span>
+</div>
+<main class="wrap">
+  <div class="blank">
+    <p class="blank-code" th:text="${status}">500</p>
+    <h1 class="page-title" th:text="${status == 404 ? '没有这一页' : '出了点问题'}">出了点问题</h1>
+    <p class="sub" th:if="${message != null and not #strings.isEmpty(message)}" th:text="${message}">说明</p>
+    <p class="sub" th:if="${message == null or #strings.isEmpty(message)}">
+      这个地址不存在，或者服务端刚刚咬了一下舌头。
+    </p>
+    <p><a class="btn btn-ghost" href="/">回首页</a></p>
+  </div>
+</main>
+<script src="/js/app.js" defer></script>
+</body>
+</html>

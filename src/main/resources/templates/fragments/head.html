@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:fragment="head(pageTitle)">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title th:text="${#strings.isEmpty(pageTitle) ? site['site_title'] : (pageTitle + ' · ' + site['site_title'])}">make me better</title>
+  <meta name="description" th:content="${site['site_tagline']}" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="_csrf" th:content="${_csrf?.token}" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <script>
+    try {
+      var t = localStorage.getItem('mmb-theme');
+      document.documentElement.dataset.theme = t === 'light' ? 'light' : 'dark';
+    } catch (e) {
+      document.documentElement.dataset.theme = 'dark';
+    }
+  </script>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body></body>
+</html>

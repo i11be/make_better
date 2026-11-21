@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN" data-theme="auto">
+<head th:replace="~{fragments/head :: head(${title})}"></head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="wrap">
+  <section class="profile">
+    <div class="profile-avatar">
+      <img th:if="${profile != null and !#strings.isEmpty(profile.avatarPath)}"
+           th:src="${profile.avatarUrl}" alt="" />
+      <span th:if="${profile == null or #strings.isEmpty(profile.avatarPath)}" th:text="${initial}">M</span>
+    </div>
+    <div class="profile-info">
+      <h1 class="profile-name" th:text="${profile != null ? profile.username : site['site_title']}">me</h1>
+      <p class="profile-bio"
+         th:text="${profile != null and !#strings.isEmpty(profile.bio) ? profile.bio : site['site_tagline']}">一句签名</p>
+      <p class="profile-stats">
+        <a th:href="@{/feed}"><b th:text="${postsCount}">0</b> 动态</a>
+        <span class="sep">·</span>
+        <a th:href="@{/study}"><b th:text="${studyCount}">0</b> 学习</a>
+        <span class="sep">·</span>
+        <a th:href="@{/archive}"><b th:text="${archiveCount}">0</b> 档案</a>
+        <span class="sep">·</span>
+        <a th:href="@{/diary}"><b th:text="${diaryCount}">0</b> 日记</a>
+      </p>
+    </div>
+    <a class="btn btn-small btn-ghost profile-edit" th:if="${user != null}" th:href="@{/admin/settings}">改资料</a>
+  </section>
+
+  <p class="banner" th:if="${param.ok != null and param.ok[0] == 'welcome'}">
+    账号建好了。下面几条是示例，随时可以改或删 —— 先去
+    <a th:href="@{/feed}">发一条动态</a>。
+  </p>
+
+  <section class="block">
+    <div class="block-head">
+      <h2>最近动态</h2>
+      <a class="more" th:href="@{/feed}" th:text="${'全部 ' + postsCount + ' 条 →'}">全部</a>
+    </div>
+    <div th:if="${#lists.isEmpty(posts)}" class="empty">还没有动态。</div>
+    <ol class="mini-feed" th:unless="${#lists.isEmpty(posts)}">
+      <li th:each="p : ${posts}">
+        <a class="mini-link" th:href="${'/feed/' + p.entry.id}">
+          <span class="mini-body" th:text="${@viewHelper.excerpt(p.entry.bodyMd, 70)}">…</span>
+          <span class="mini-meta">
+            <time th:text="${@viewHelper.dateTime(p.entry.createdAt)}">时间</time>
+            <span class="chip" th:if="${not #lists.isEmpty(p.images)}"
+                  th:text="${#lists.size(p.images) + ' 张图'}">图</span>
+          </span>
+        </a>
+      </li>
+    </ol>
+  </section>
+
+  <section class="block">
+    <div class="block-head">
+      <h2>最近学习</h2>
+      <a class="more" th:href="@{/study}" th:text="${'全部 ' + studyCount + ' 篇 →'}">全部</a>
+    </div>
+    <div th:replace="~{fragments/entry-list :: list(${study}, ${kStudy}, true, '还没有学习记录。')}"></div>
+  </section>
+
+  <section class="block">
+    <div class="block-head">
+      <h2>日记</h2>
+      <a class="more" th:if="${diaryUnlocked}" th:href="@{/diary}"
+         th:text="${'全部 ' + diaryCount + ' 篇 →'}">全部</a>
+      <a class="more" th:unless="${diaryUnlocked}" th:href="@{/diary/unlock}">输入日记密码 →</a>
+    </div>
+    <th:block th:if="${diaryUnlocked}">
+      <div th:replace="~{fragments/entry-list :: list(${diary}, ${kDiary}, false, '还没有日记。')}"></div>
+    </th:block>
+    <div class="locked" th:unless="${diaryUnlocked}">
+      <span class="locked-icon" aria-hidden="true">✳</span>
+      <p th:text="${diaryCount + ' 篇日记还锁着。这一区要单独再输一次密码。'}">日记还锁着</p>
+      <a class="btn btn-ghost" th:href="@{/diary/unlock}">解锁日记</a>
+    </div>
+  </section>
+
+  <section class="block" th:if="${!#strings.isEmpty(nowHtml)}">
+    <div class="block-head">
+      <h2>现在</h2>
+      <a class="more" th:href="@{/admin/settings}">改一下 →</a>
+    </div>
+    <div class="prose prose-tight" th:utext="${nowHtml}"></div>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

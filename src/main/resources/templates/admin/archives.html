@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN" data-theme="auto">
+<head th:replace="~{fragments/head :: head(${title})}"></head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="wrap">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">档案</h1>
+      <p class="sub">一个主题一个档案，里面再往细里写条目。</p>
+    </div>
+    <a class="quiet" th:href="@{/archive}">看前台 →</a>
+  </header>
+
+  <p class="banner" th:if="${param.ok != null and param.ok[0] == 'deleted'}">删掉了。</p>
+  <p class="form-error" th:if="${error != null}" th:text="${error}">出错了</p>
+
+  <section class="block">
+    <div class="block-head"><h2>新建档案</h2></div>
+    <form th:action="@{/admin/archives}" method="post" class="stack">
+      <div class="row3">
+        <label class="field">
+          <span>名字</span>
+          <input name="title" maxlength="120" placeholder="原神 / 三体 / Java 并发" required />
+        </label>
+        <label class="field row-span-2">
+          <span>一句话简介（可空）</span>
+          <input name="summary" maxlength="300" placeholder="这个档案是干什么的" />
+        </label>
+      </div>
+      <button class="btn btn-small" type="submit">建档案</button>
+    </form>
+  </section>
+
+  <section class="block">
+    <div class="block-head"><h2>全部档案</h2></div>
+    <p class="empty" th:if="${#lists.isEmpty(archives)}">还没有档案。</p>
+    <table class="table" th:unless="${#lists.isEmpty(archives)}">
+      <thead><tr><th>名字</th><th>简介</th><th>更新</th><th>操作</th></tr></thead>
+      <tbody>
+      <tr th:each="a : ${archives}">
+        <td class="td-title"><a th:href="${'/admin/archives/' + a.id}" th:text="${a.title}">标题</a></td>
+        <td th:text="${a.summary}" class="td-summary">—</td>
+        <td class="td-date" th:text="${@viewHelper.dateTime(a.updatedAt)}">时间</td>
+        <td class="td-actions">
+          <a class="quiet" th:href="${'/archive/' + a.id}">看</a>
+          <form th:action="${'/admin/archives/' + a.id + '/delete'}" method="post" class="inline"
+                th:attr="data-confirm=${'删掉档案「' + a.title + '」？里面的条目也会一起删，不能撤回。'}">
+            <button type="submit" class="linklike danger">删</button>
+          </form>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

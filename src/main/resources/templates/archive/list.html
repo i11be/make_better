@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN" data-theme="auto">
+<head th:replace="~{fragments/head :: head(${title})}"></head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="wrap">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">档案</h1>
+      <p class="sub">一个主题一个档案：一本书、一个游戏、一段想弄明白的事。</p>
+    </div>
+    <a class="btn btn-small" th:if="${user != null}" th:href="@{/admin/archives}">管理档案</a>
+  </header>
+
+  <p class="empty" th:if="${#lists.isEmpty(cards)}">还没有档案。去后台建一个。</p>
+
+  <div class="archive-grid" th:unless="${#lists.isEmpty(cards)}">
+    <a class="archive-card" th:each="c : ${cards}" th:href="${'/archive/' + c.archive.id}">
+      <h2 class="archive-card-title" th:text="${c.archive.title}">标题</h2>
+      <p class="archive-card-summary" th:if="${!#strings.isEmpty(c.archive.summary)}"
+         th:text="${c.archive.summary}">简介</p>
+      <span class="archive-card-meta"
+            th:text="${c.itemCount + ' 条 · 更新于 ' + @viewHelper.dateTime(c.archive.updatedAt)}">0 条</span>
+    </a>
+  </div>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

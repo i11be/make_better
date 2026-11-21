@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN" data-theme="auto">
+<head th:replace="~{fragments/head :: head(${title})}"></head>
+<body>
+
+<div class="gate-theme">
+  <span th:replace="~{fragments/theme-switch :: toggle}"></span>
+</div>
+
+<div class="gate">
+  <div class="gate-card gate-card-wide">
+    <p class="eyebrow">第一次来</p>
+    <h1 class="gate-title">先设置一下</h1>
+    <p class="gate-sub">
+      这里只有一个账号，就是你自己。登录密码用来进整个站；日记密码是第二道锁，只挡日记那一区。
+    </p>
+
+    <p class="form-error" th:if="${error != null}" th:text="${error}">出错了</p>
+
+    <form th:action="@{/setup}" th:object="${form}" method="post" class="stack">
+      <label class="field">
+        <span>用户名</span>
+        <input th:field="*{username}" autocomplete="username" required autofocus />
+      </label>
+      <label class="field">
+        <span>登录密码</span>
+        <input th:field="*{password}" type="password" autocomplete="new-password" minlength="8" required />
+        <small>至少 8 位。</small>
+      </label>
+      <label class="field">
+        <span>日记密码</span>
+        <input th:field="*{diary}" type="password" autocomplete="new-password" minlength="4" required />
+        <small>至少 4 位，建议和登录密码不一样。</small>
+      </label>
+      <label class="field">
+        <span>日记密码（再输一次）</span>
+        <input th:field="*{diary2}" type="password" autocomplete="new-password" minlength="4" required />
+      </label>
+      <button class="btn btn-block" type="submit">建好，进去</button>
+    </form>
+
+    <p class="gate-foot">密码只存哈希，我也看不到原文。忘了只能重来。</p>
+  </div>
+</div>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

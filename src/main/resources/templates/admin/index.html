@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN" data-theme="auto">
+<head th:replace="~{fragments/head :: head(${title})}"></head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="wrap wrap-wide">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">管理</h1>
+      <p class="sub">写、改、删。日记要解锁后才看得到。</p>
+    </div>
+    <div class="head-actions">
+      <a class="btn btn-small" th:href="@{/admin/new}">写一篇</a>
+      <a class="btn btn-small btn-ghost" th:href="@{/feed}">发动态</a>
+      <a class="btn btn-small btn-ghost" th:href="@{/admin/archives}">档案</a>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <a th:href="@{/admin}" th:classappend="${filter == ''} ? 'on'">全部</a>
+    <a th:each="k : ${kinds}" th:href="@{/admin(kind=k.code)}"
+       th:classappend="${filter == k.code} ? 'on'">
+      <span th:text="${k.label}">学习</span>
+      <span class="count" th:text="${counts.get(k.code)}">0</span>
+    </a>
+  </nav>
+
+  <p class="banner" th:if="${param.ok != null and param.ok[0] == 'deleted'}">删掉了。</p>
+  <p class="empty" th:if="${#lists.isEmpty(entries)}">这里还空着。</p>
+
+  <table class="table" th:unless="${#lists.isEmpty(entries)}">
+    <thead>
+    <tr><th>日期</th><th>标题</th><th>类型</th><th>操作</th></tr>
+    </thead>
+    <tbody>
+    <tr th:each="e : ${entries}">
+      <td class="td-date" th:text="${@viewHelper.date(e.entryDate)}">2026年11月16日</td>
+      <td class="td-title">
+        <a th:href="${e.kind.path + '/' + e.id}" th:text="${e.title}">标题</a>
+      </td>
+      <td><span class="chip" th:classappend="${'chip-' + e.kind.code}" th:text="${e.kind.label}">学习</span></td>
+      <td class="td-actions">
+        <a class="quiet" th:href="@{/admin/entries/{id}/edit(id=e.id)}">改</a>
+        <form th:action="@{/admin/entries/{id}/delete(id=e.id)}" method="post" class="inline"
+              th:attr="data-confirm=${'删掉「' + e.title + '」？这个动作不能撤回。'}">
+          <button type="submit" class="linklike danger">删</button>
+        </form>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>
