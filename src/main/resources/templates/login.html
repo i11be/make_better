@@ -8,38 +8,44 @@
 </div>
 
 <div class="gate gate-hero">
-  <div class="gate-bg" aria-hidden="true">
+  <!-- 舞台上的一切都是图片坐标：芯片热区、提示、卡片都钉在这块图上 -->
+  <div class="gate-stage">
+    <input type="checkbox" id="gate-open" class="gate-chip"
+           th:checked="${param.error != null}" aria-label="Open the login panel" />
+
     <img src="/img/login-bg.jpg"
          srcset="/img/login-bg-800.jpg 800w, /img/login-bg.jpg 1589w"
          sizes="100vw" width="1589" height="1080" alt="" fetchpriority="high" />
-    <span class="gate-bg-veil"></span>
-  </div>
 
-  <div class="gate-card" th:classappend="${param.error != null} ? 'is-error'">
-    <p class="gate-status">
-      <span class="gate-status-dot" aria-hidden="true"></span>
-      <span>SECURE ACCESS</span>
-    </p>
+    <span class="gate-veil" aria-hidden="true"></span>
 
-    <h1 class="gate-title">身份核验</h1>
-    <p class="gate-sub">只给自己用。用户名和密码，一道门。</p>
+    <p class="gate-notice" th:if="${param.logout != null}">SIGNED OUT</p>
 
-    <p class="form-error" th:if="${param.error != null}">用户名或密码不对。</p>
-    <p class="banner" th:if="${param.logout != null}">已经退出了。</p>
+    <section class="gate-card" th:classappend="${param.error != null} ? 'is-error'">
+      <p class="gate-status">
+        <span class="gate-status-dot" aria-hidden="true"></span>
+        <span>SECURE ACCESS</span>
+      </p>
 
-    <form th:action="@{/login}" method="post" class="stack">
-      <label class="field">
-        <span>用户名</span>
-        <input name="username" autocomplete="username" required autofocus />
-      </label>
-      <label class="field">
-        <span>密码</span>
-        <input name="password" type="password" autocomplete="current-password" required />
-      </label>
-      <button class="btn btn-block gate-submit" type="submit">核 验</button>
-    </form>
+      <h1 class="gate-title">IDENTITY CHECK</h1>
+      <p class="gate-sub">Private access only.</p>
 
-    <p class="gate-foot">整站都在这一道门后面，日记还要再输一次密码。</p>
+      <p class="form-error" th:if="${param.error != null}">Wrong username or password.</p>
+
+      <form th:action="@{/login}" method="post" class="stack">
+        <label class="field">
+          <span>USERNAME</span>
+          <input name="username" autocomplete="username" required />
+        </label>
+        <label class="field">
+          <span>PASSWORD</span>
+          <input name="password" type="password" autocomplete="current-password" required />
+        </label>
+        <button class="btn btn-block gate-submit" type="submit">VERIFY</button>
+      </form>
+
+      <p class="gate-foot">Everything behind this door. The diary asks again.</p>
+    </section>
   </div>
 </div>
 

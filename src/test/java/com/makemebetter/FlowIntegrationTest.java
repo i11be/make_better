@@ -337,6 +337,17 @@ class FlowIntegrationTest {
                         .param("password", "wrong-password"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/login?error"));
+
+        // 21. 登录页平时只有海报和芯片，密码错了卡片才是展开的
+        mvc.perform(get("/login"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("gate-chip")))
+                .andExpect(content().string(not(containsString("checked=\"checked\""))));
+
+        mvc.perform(get("/login?error"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("checked=\"checked\"")))
+                .andExpect(content().string(containsString("Wrong username or password")));
     }
 
     private MockMultipartFile avatar() throws IOException {

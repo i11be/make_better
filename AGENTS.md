@@ -84,7 +84,8 @@ src/main/java/com/makemebetter/
                          两个拦截器、GlobalModelAttributes、form/
 src/main/resources/
   application*.yml       通用 / dev(H2) / mysql
-  db/migration/          Flyway：V1__init.sql、V2__profile_feed_archive.sql、V3__study_category.sql
+  db/migration/          Flyway：V1__init.sql、V2__profile_feed_archive.sql、V3__study_category.sql、
+                         V4__entry_body_mediumtext.sql
   templates/             fragments/ 公共片段、archive/ 档案页、admin/ 后台
   static/css/style.css   全站样式（唯一 CSS 文件）
   static/js/app.js       主题切换、编辑器、发动态选图、大图查看
@@ -115,6 +116,8 @@ V2 曾经因为「先加 CHECK、后改数据」在真库上失败）。
 - 会话：`HttpSession`，`HttpOnly` + `SameSite=Lax`；登录 30 天、日记解锁 30 分钟
 - 守卫：**全站都要登录**（`/login`、`/setup`、`/error` 和静态资源除外），没有「能看不能写」的中间态；
   `/diary/**` 在登录之上还要日记密码解锁
+- 登录页：整屏海报，点左侧那块橙色芯片才展开输入框（`#gate-open` 这个 checkbox 控制）；
+  密码错了面板保持展开，退出后收起。芯片热区钉在图片坐标上，见 style.css 的 `.gate-stage`
 - 上传：只收 `image/*`，单张 ≤10MB，一次 ≤9 张；用 ImageIO 解码校验，读不出来就拒绝
 - 图片输出：`/files/{*path}` 只认落在 upload 目录内的文件，`..` 越界一律 404
 - CSRF：Spring Security 默认开启，表单用 `th:action` 会自动带 token，不许关

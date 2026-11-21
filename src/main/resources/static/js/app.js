@@ -142,6 +142,30 @@
     });
   }
 
+  // ---------- 登录页：点芯片开门 ----------
+  var gateToggle = document.getElementById('gate-open');
+  if (gateToggle) {
+    var gateUser = document.querySelector('.gate-card input[name="username"]');
+
+    var focusUser = function () {
+      if (gateUser) gateUser.focus();
+    };
+
+    gateToggle.addEventListener('change', function () {
+      if (gateToggle.checked) window.setTimeout(focusUser, 160);
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && gateToggle.checked) {
+        gateToggle.checked = false;
+        gateToggle.focus();
+      }
+    });
+
+    // 密码错了回来时，卡片已经是展开的，直接把光标放进输入框
+    if (gateToggle.checked) window.setTimeout(focusUser, 160);
+  }
+
   // ---------- 编辑器 ----------
   var editorForm = document.getElementById('editor-form');
   if (!editorForm) return;
