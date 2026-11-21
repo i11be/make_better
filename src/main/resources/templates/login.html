@@ -7,10 +7,22 @@
   <span th:replace="~{fragments/theme-switch :: toggle}"></span>
 </div>
 
-<div class="gate">
+<div class="gate gate-hero">
+  <div class="gate-bg" aria-hidden="true">
+    <img src="/img/login-bg.jpg"
+         srcset="/img/login-bg-800.jpg 800w, /img/login-bg.jpg 1589w"
+         sizes="100vw" width="1589" height="1080" alt="" fetchpriority="high" />
+    <span class="gate-bg-veil"></span>
+  </div>
+
   <div class="gate-card" th:classappend="${param.error != null} ? 'is-error'">
-    <p class="eyebrow">只给自己用</p>
-    <h1 class="gate-title">登录</h1>
+    <p class="gate-status">
+      <span class="gate-status-dot" aria-hidden="true"></span>
+      <span>SECURE ACCESS</span>
+    </p>
+
+    <h1 class="gate-title">身份核验</h1>
+    <p class="gate-sub">只给自己用。用户名和密码，一道门。</p>
 
     <p class="form-error" th:if="${param.error != null}">用户名或密码不对。</p>
     <p class="banner" th:if="${param.logout != null}">已经退出了。</p>
@@ -24,10 +36,10 @@
         <span>密码</span>
         <input name="password" type="password" autocomplete="current-password" required />
       </label>
-      <button class="btn btn-block" type="submit">进去</button>
+      <button class="btn btn-block gate-submit" type="submit">核 验</button>
     </form>
 
-    <p class="gate-foot"><a th:href="@{/}">← 先回首页看看</a></p>
+    <p class="gate-foot">整站都在这一道门后面，日记还要再输一次密码。</p>
   </div>
 </div>
 

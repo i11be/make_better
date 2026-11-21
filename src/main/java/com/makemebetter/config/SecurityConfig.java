@@ -35,15 +35,19 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http, UserDetailsService userDetailsService)
             throws Exception {
         http
+                // 整站都在门后：除了登录、首次设置和静态资源，什么都得先登录
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/admin/**", "/diary/**").hasRole("OWNER")
-                        .anyRequest().permitAll())
+                        .requestMatchers("/login", "/setup", "/error").permitAll()
+                        .requestMatchers("/css/**", "/js/**", "/img/**", "/favicon.svg").permitAll()
+                        .anyRequest().hasRole("OWNER"))
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
                         .usernameParameter("username")
                         .passwordParameter("password")
-                        .defaultSuccessUrl("/", false)
+                        // 登录成功一律回到世界树，并让它弹一句「身份核验成功」
+                        .successHandler((request, response, authentication) ->
+                                response.sendRedirect("/?ok=login"))
                         .failureUrl("/login?error")
                         .permitAll())
                 .logout(logout -> logout

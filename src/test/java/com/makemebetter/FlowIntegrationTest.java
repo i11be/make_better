@@ -42,12 +42,20 @@ class FlowIntegrationTest {
 
     @Test
     void 走一遍完整流程() throws Exception {
-        // 1. 还没账号，首页被带去 /setup
+        // 1. 整站都在门后：没登录，连首页都进不去
         mvc.perform(get("/"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrlPattern("**/login"));
+
+        mvc.perform(get("/feed"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrlPattern("**/login"));
+
+        // 2. 还没有账号时，登录页自己把人送去 /setup
+        mvc.perform(get("/login"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/setup"));
 
-        // 2. 设置页能打开
         mvc.perform(get("/setup"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("先设置一下")));
@@ -65,11 +73,17 @@ class FlowIntegrationTest {
         MockHttpSession session = (MockHttpSession) setup.getRequest().getSession(false);
         assertNotNull(session, "建账号后应该已经登录");
 
-        // 4. 首页是个人主页：显示 ID，不再是站点名当标题
+        // 4. 首页只剩那棵世界树：五个入口挂在上面，正文不该再出现
         mvc.perform(get("/").session(session))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("tester")))
-                .andExpect(content().string(containsString("为什么要有这个地方")));
+                .andExpect(content().string(containsString("tree-node--home")))
+                .andExpect(content().string(containsString("tree-node--diary")))
+                .andExpect(content().string(not(containsString("为什么要有这个地方"))));
+
+        // 4.1 树上的「主页」是头像、ID、签名
+        mvc.perform(get("/profile").session(session))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("tester")));
 
         // 5. 改资料：ID + 签名 + 头像
         mvc.perform(multipart("/admin/profile").file(avatar()).with(csrf()).session(session)
@@ -78,7 +92,7 @@ class FlowIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin/settings?ok=profile"));
 
-        mvc.perform(get("/").session(session))
+        mvc.perform(get("/profile").session(session))
                 .andExpect(content().string(containsString("小羊")))
                 .andExpect(content().string(containsString("把日子过明白")))
                 .andExpect(content().string(containsString("/files/avatars/")));
@@ -97,9 +111,9 @@ class FlowIntegrationTest {
                 .andExpect(content().string(containsString("data-lightbox")))
                 .andReturn();
 
-        // 首页的最近动态里会显示张数
+        // 树上那个「动态」节点的计数跟着走
         mvc.perform(get("/").session(session))
-                .andExpect(content().string(containsString("2 张图")));
+                .andExpect(content().string(containsString("2 条")));
 
         // 7. 图片能真的取出来
         java.util.regex.Matcher matcher = java.util.regex.Pattern
@@ -230,16 +244,45 @@ class FlowIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin?ok=deleted"));
 
-        // 17. 退出后后台要登录
+        // 17. 404（登录状态下）
+        mvc.perform(get("/no-such-page").session(session)).andExpect(status().isNotFound());
+
+        // 18. 退出之后整站都要重新登录，不只是后台
         mvc.perform(post("/logout").session(session).with(csrf()))
                 .andExpect(status().is3xxRedirection());
+
+        mvc.perform(get("/"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrlPattern("**/login"));
+
+        mvc.perform(get("/study"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrlPattern("**/login"));
 
         mvc.perform(get("/admin"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrlPattern("**/login"));
 
-        // 18. 404
-        mvc.perform(get("/no-such-page")).andExpect(status().isNotFound());
+        // 19. 重新登录：对了回世界树，并弹一句「身份核验成功」
+        MvcResult back = mvc.perform(post("/login").with(csrf())
+                        .param("username", "小羊")
+                        .param("password", "test12345"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/?ok=login"))
+                .andReturn();
+
+        MockHttpSession backSession = (MockHttpSession) back.getRequest().getSession(false);
+        assertNotNull(backSession, "登录成功应该拿到会话");
+        mvc.perform(get("/?ok=login").session(backSession))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("身份核验成功")));
+
+        // 20. 密码不对，回登录页
+        mvc.perform(post("/login").with(csrf())
+                        .param("username", "小羊")
+                        .param("password", "wrong-password"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login?error"));
     }
 
     private MockMultipartFile avatar() throws IOException {

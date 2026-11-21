@@ -2,91 +2,52 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="zh-CN" data-theme="auto">
 <head th:replace="~{fragments/head :: head(${title})}"></head>
 <body>
-<header th:replace="~{fragments/header :: header}"></header>
+<main>
+  <p class="toast" role="status"
+     th:if="${param.ok != null and param.ok[0] == 'login'}">身份核验成功</p>
 
-<main class="wrap">
-  <section class="profile">
-    <div class="profile-avatar">
-      <img th:if="${profile != null and !#strings.isEmpty(profile.avatarPath)}"
-           th:src="${profile.avatarUrl}" alt="" />
-      <span th:if="${profile == null or #strings.isEmpty(profile.avatarPath)}" th:text="${initial}">M</span>
+  <section class="tree-hero" aria-label="入口">
+    <div class="tree-canvas">
+      <picture>
+        <source media="(max-width: 860px)" srcset="/img/tree-960.jpg" />
+        <img src="/img/tree-1920.jpg"
+             srcset="/img/tree-960.jpg 960w, /img/tree-1440.jpg 1440w, /img/tree-1920.jpg 1920w"
+             sizes="100vw" width="1920" height="960" alt=""
+             decoding="async" fetchpriority="high" />
+      </picture>
+      <div class="tree-veil" aria-hidden="true"></div>
     </div>
-    <div class="profile-info">
-      <h1 class="profile-name" th:text="${profile != null ? profile.username : site['site_title']}">me</h1>
-      <p class="profile-bio"
-         th:text="${profile != null and !#strings.isEmpty(profile.bio) ? profile.bio : site['site_tagline']}">一句签名</p>
-      <p class="profile-stats">
-        <a th:href="@{/feed}"><b th:text="${postsCount}">0</b> 动态</a>
-        <span class="sep">·</span>
-        <a th:href="@{/study}"><b th:text="${studyCount}">0</b> 学习</a>
-        <span class="sep">·</span>
-        <a th:href="@{/archive}"><b th:text="${archiveCount}">0</b> 档案</a>
-        <span class="sep">·</span>
-        <a th:href="@{/diary}"><b th:text="${diaryCount}">0</b> 日记</a>
-      </p>
-    </div>
-    <a class="btn btn-small btn-ghost profile-edit" th:if="${user != null}" th:href="@{/admin/settings}">改资料</a>
+    <nav class="tree-nodes" aria-label="五个入口">
+      <a class="tree-node tree-node--home" th:href="@{/profile}">
+        <span class="tree-dot" aria-hidden="true"></span>
+        <span class="tree-tag"><b>主页</b><i>头像 · ID</i></span>
+      </a>
+      <a class="tree-node tree-node--feed" th:href="@{/feed}">
+        <span class="tree-dot" aria-hidden="true"></span>
+        <span class="tree-tag"><b>动态</b><i th:text="${postsCount + ' 条'}">0 条</i></span>
+      </a>
+      <a class="tree-node tree-node--study" th:href="@{/study}">
+        <span class="tree-dot" aria-hidden="true"></span>
+        <span class="tree-tag"><b>学习</b><i th:text="${studyCount + ' 篇'}">0 篇</i></span>
+      </a>
+      <a class="tree-node tree-node--archive" th:href="@{/archive}">
+        <span class="tree-dot" aria-hidden="true"></span>
+        <span class="tree-tag"><b>档案</b><i th:text="${archiveCount + ' 个'}">0 个</i></span>
+      </a>
+      <a class="tree-node tree-node--diary" th:href="@{/diary}">
+        <span class="tree-dot" aria-hidden="true"></span>
+        <span class="tree-tag"><b>日记</b><i th:text="${diaryCount + ' 篇'}">0 篇</i></span>
+      </a>
+    </nav>
   </section>
 
-  <p class="banner" th:if="${param.ok != null and param.ok[0] == 'welcome'}">
-    账号建好了。下面几条是示例，随时可以改或删 —— 先去
-    <a th:href="@{/feed}">发一条动态</a>。
-  </p>
-
-  <section class="block">
-    <div class="block-head">
-      <h2>最近动态</h2>
-      <a class="more" th:href="@{/feed}" th:text="${'全部 ' + postsCount + ' 条 →'}">全部</a>
-    </div>
-    <div th:if="${#lists.isEmpty(posts)}" class="empty">还没有动态。</div>
-    <ol class="mini-feed" th:unless="${#lists.isEmpty(posts)}">
-      <li th:each="p : ${posts}">
-        <a class="mini-link" th:href="${'/feed/' + p.entry.id}">
-          <span class="mini-body" th:text="${@viewHelper.excerpt(p.entry.bodyMd, 70)}">…</span>
-          <span class="mini-meta">
-            <time th:text="${@viewHelper.dateTime(p.entry.createdAt)}">时间</time>
-            <span class="chip" th:if="${not #lists.isEmpty(p.images)}"
-                  th:text="${#lists.size(p.images) + ' 张图'}">图</span>
-          </span>
-        </a>
-      </li>
-    </ol>
-  </section>
-
-  <section class="block">
-    <div class="block-head">
-      <h2>最近学习</h2>
-      <a class="more" th:href="@{/study}" th:text="${'全部 ' + studyCount + ' 篇 →'}">全部</a>
-    </div>
-    <div th:replace="~{fragments/entry-list :: list(${study}, ${kStudy}, true, '还没有学习记录。')}"></div>
-  </section>
-
-  <section class="block">
-    <div class="block-head">
-      <h2>日记</h2>
-      <a class="more" th:if="${diaryUnlocked}" th:href="@{/diary}"
-         th:text="${'全部 ' + diaryCount + ' 篇 →'}">全部</a>
-      <a class="more" th:unless="${diaryUnlocked}" th:href="@{/diary/unlock}">输入日记密码 →</a>
-    </div>
-    <th:block th:if="${diaryUnlocked}">
-      <div th:replace="~{fragments/entry-list :: list(${diary}, ${kDiary}, false, '还没有日记。')}"></div>
-    </th:block>
-    <div class="locked" th:unless="${diaryUnlocked}">
-      <span class="locked-icon" aria-hidden="true">✳</span>
-      <p th:text="${diaryCount + ' 篇日记还锁着。这一区要单独再输一次密码。'}">日记还锁着</p>
-      <a class="btn btn-ghost" th:href="@{/diary/unlock}">解锁日记</a>
-    </div>
-  </section>
-
-  <section class="block" th:if="${!#strings.isEmpty(nowHtml)}">
-    <div class="block-head">
-      <h2>现在</h2>
-      <a class="more" th:href="@{/admin/settings}">改一下 →</a>
-    </div>
-    <div class="prose prose-tight" th:utext="${nowHtml}"></div>
-  </section>
+  <div class="wrap" th:if="${param.ok != null and param.ok[0] == 'welcome'}">
+    <p class="banner">
+      账号建好了。点树枝上的名字进去 —— 先去
+      <a th:href="@{/profile}">主页</a> 看看，或者
+      <a th:href="@{/feed}">发一条动态</a>。
+    </p>
+  </div>
 </main>
-
-<footer th:replace="~{fragments/footer :: footer}"></footer>
 </body>
 </html>

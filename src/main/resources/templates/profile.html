@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN" data-theme="auto">
+<head th:replace="~{fragments/head :: head(${title})}"></head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="wrap">
+  <a class="back-link" th:href="@{/}">← 世界树</a>
+
+  <section class="profile profile-page">
+    <div class="profile-avatar">
+      <img th:if="${profile != null and !#strings.isEmpty(profile.avatarPath)}"
+           th:src="${profile.avatarUrl}" alt="" />
+      <span th:if="${profile == null or #strings.isEmpty(profile.avatarPath)}" th:text="${initial}">M</span>
+    </div>
+    <div class="profile-info">
+      <h1 class="profile-name" th:text="${profile != null ? profile.username : site['site_title']}">me</h1>
+      <p class="profile-bio"
+         th:text="${profile != null and !#strings.isEmpty(profile.bio) ? profile.bio : site['site_tagline']}">一句签名</p>
+      <p class="profile-stats">
+        <a th:href="@{/feed}"><b th:text="${postsCount}">0</b> 动态</a>
+        <span class="sep">·</span>
+        <a th:href="@{/study}"><b th:text="${studyCount}">0</b> 学习</a>
+        <span class="sep">·</span>
+        <a th:href="@{/archive}"><b th:text="${archiveCount}">0</b> 档案</a>
+        <span class="sep">·</span>
+        <a th:href="@{/diary}"><b th:text="${diaryCount}">0</b> 日记</a>
+      </p>
+    </div>
+    <a class="btn btn-small btn-ghost profile-edit" th:if="${user != null}" th:href="@{/admin/settings}">改资料</a>
+  </section>
+
+  <section class="block" th:if="${!#strings.isEmpty(nowHtml)}">
+    <div class="block-head">
+      <h2>现在</h2>
+      <a class="more" th:href="@{/admin/settings}">改一下 →</a>
+    </div>
+    <div class="prose prose-tight" th:utext="${nowHtml}"></div>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>
