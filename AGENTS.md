@@ -18,7 +18,8 @@
 「make me better」是一个**只给自己用**的个人空间，不是公共博客，也没有别人注册：
 
 - **首页**：只有一张世界树图，连顶栏都没有，整页就是这棵树；五个入口（主页、动态、学习、档案、日记）挂在树枝上，不显示条目正文
-- **主页（profile）**：头像 + ID + 一句签名 + 四个统计 +「现在」，也就是原来首页那坨资料
+- **主页（profile）**：头像 + ID + 一句签名 + 四个统计（动态/学习/档案/日记）+「现在」；
+  资料卡下面还有一条「相册」横条（照片数、图集数、几张缩略图，点进 /album）
 - **动态（feed）**：短句 + 最多 9 张图，像 QQ 空间，点图看大图
 - **学习（study）**：长笔记，标题 + 分类（八股/算法，可不选）+ 一个标签 + Markdown 正文；
   发布日期保存时自动记，列表能按分类看、按标签分组
@@ -69,6 +70,9 @@ mvnw.cmd package             # 出 jar
 2. **`th:if` 和 `th:replace` 别写在同一个元素上**：replace 优先级更高，`th:if` 会被忽略。
    要条件包含就套一层 `<th:block th:if="...">`。
 3. **片段里的脚本**：`th:fragment` 只包含标记了它的那个元素；放在它外面的 `<script>` 会被丢掉（曾经导致整站 JS 没加载）。
+4. **`th:attr` 里的空值属性会被丢掉**：`th:attr="data-full=${p.url},data-lightbox=''"` 渲染出来没有 `data-lightbox`，
+   脚本选不到元素，点缩略图就跳去了原图。要写成裸属性 `<a data-lightbox th:attr="data-full=…">`。
+5. **首页五个热区钉在图上**：坐标写在 style.css 的 `.tree-node--*`（`--x` / `--y`），换底图要同步改，那里有注释。
 
 ## 4. 目录结构
 
@@ -90,7 +94,8 @@ src/main/resources/
   application*.yml       通用 / dev(H2) / mysql
   db/migration/          Flyway：V1__init.sql、V2__profile_feed_archive.sql、V3__study_category.sql、
                          V4__entry_body_mediumtext.sql、V5__archive_drop_summary.sql
-  templates/             fragments/ 公共片段、archive/ 档案页、admin/ 后台
+  templates/             index.html 世界树、profile、entry/study/feed/diary 各页、
+                         archive/ 档案页、album/ 相册页、admin/ 后台、fragments/ 公共片段
   static/css/style.css   全站样式（唯一 CSS 文件）
   static/js/app.js       主题切换、编辑器、发动态选图、大图查看
 src/test/java/           集成测试（见第 8 节）
@@ -125,8 +130,12 @@ V2 曾经因为「先加 CHECK、后改数据」在真库上失败）。
   `/diary/**` 在登录之上还要日记密码解锁
 - 登录页：整屏海报，点左侧那块橙色芯片才展开输入框（`#gate-open` 这个 checkbox 控制）；
   密码错了面板保持展开，退出后收起。芯片热区钉在图片坐标上，见 style.css 的 `.gate-stage`
-- 上传：只收 `image/*`，单张 ≤10MB，一次 ≤9 张；用 ImageIO 解码校验，读不出来就拒绝
-- 图片输出：`/files/{*path}` 只认落在 upload 目录内的文件，`..` 越界一律 404
+- 上传：只收 `image/*`，单张 ≤10MB；动态一次最多 9 张是**前端**限制（`app.js` 里的 `MAX_PHOTOS`），
+  服务端不卡张数；用 ImageIO 解码校验，读不出来就拒绝
+- 相册上传另有一套：扩展名白名单 jpg/jpeg/png/gif/webp、≤10MB、解码校验 + ≤40MP、
+  文件名去掉 `\ / : * ? " < > |` 和控制字符、重名加 `-2` 不覆盖、删除只移到 `.trash/`
+- 图片输出：`/files/{*path}` 只认落在 upload 目录内的文件，`..` 越界一律 404；
+  响应头 `Cache-Control: private`，别改成 public（私人图片不该进共享缓存）
 - CSRF：Spring Security 默认开启，表单用 `th:action` 会自动带 token，不许关
 - `application-local.yml`、`data/`、`target/` 永不进版本库
 
@@ -140,6 +149,15 @@ V2 曾经因为「先加 CHECK、后改数据」在真库上失败）。
 - 新增页面必须同时适配深色模式与手机宽度（375px 起）
 - 不用 Lombok：手写构造器/getter，或直接用 `record`
 
+### 界面上的几条规矩
+
+- **后台只有一个入口**：顶栏那个 ✎。前台页面不新增直通 `/admin` 的链接；要编辑就走 ✎ → 管理
+- **「返回」回到内容所在栏目**：编辑器按内容的 kind 回 `/study`、`/feed`、`/diary`；
+  档案条目编辑器回 `/archive/{id}`；只有从管理页进去的（带三选一那种）才回 `/admin`
+- **点图放大一律走站内灯箱**：链接上写 `data-lightbox` + `data-full`，不要直接链到 `/files/…`，
+  否则用户会掉进浏览器原生看图页，只能按后退
+- **表单用可见标签，少用 placeholder**：用户明确不喜欢输入框里的灰色提示词，标签写 `<span>` 上面
+
 ## 8. 改完必须自检
 
 ```bash
@@ -148,17 +166,20 @@ mvnw.cmd test
 
 集成测试（MockMvc + H2 的 MySQL 兼容模式）覆盖：
 建账号 → 登录 → 改 ID/签名/头像 → 发带图动态 → 空动态被拒 → 建档案 → 加条目 → 前台读取 → 调整顺序
-→ 相册上传 / 归类 / 进回收站 → 写学习 → 日记被挡 → 解锁 → 改 → 删 → 退出后后台被挡 → 404。
+→ 相册上传 / 归类 / 进回收站 → 写学习（含换行渲染） → 日记被挡 → 解锁 → 改 → 删 → 退出后后台被挡 → 404。
 
-改完必须真的跑，别只看代码。
+改完必须真的跑，别只看代码。**界面改动还要自己截图看**：跑起来用无头浏览器点一遍，
+至少确认深色、浅色两套主题都没坏。
 
 **提交**：做完一版就 `git commit` 到本地仓库即可，**不用 `git push`** —— 推不推远端由人自己决定。
 提交信息用中文，写清楚改了什么、为什么改。
 
 ## 9. 内容与写作约定
 
-- 四条主线：`study` / `feed` / `diary` / `archive`
+- 四条主线：`study` / `feed` / `diary` / `archive`；相册是第五条（文件系统，不是条目）
 - 动态的文字是**纯文本**（保留换行，不渲染 Markdown）；学习、日记、档案条目是 Markdown
+- Markdown 的**单个换行就换行**：`MarkdownService` 配了 `softbreak("<br />")`，和 CommonMark 默认不同，
+  这是有意的（写笔记时一个回车就该换行），别改回去
 - 日记不生成公开链接、不导出、不分享
 - 首页只有那棵世界树，不显示任何条目正文；条目都在各自的列表页里
 
@@ -167,6 +188,8 @@ mvnw.cmd test
 - 多用户 / 开放注册（ID 和头像只是「单人的身份」）
 - 评论、点赞、关注
 - 档案封面图、档案分类
-- 图片压缩参数可调、EXIF 方向修正
+- 相册：手动拖动排序（现在按文件名自然序，想排就重命名成 `001-`）、回收站的恢复界面（要手动把图移回）、
+  原图的校验和、批量上传（一次一张）
+- 图片压缩参数可调、EXIF 方向修正（手机竖拍的图会歪）
 - 全文搜索、备份按钮（现在是 `mysqldump` + 拷 `data/uploads`）
-- Docker / 云部署
+- Docker / 云部署、局域网/手机访问（服务只监听 127.0.0.1）
