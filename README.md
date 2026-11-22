@@ -90,6 +90,50 @@ data/uploads/albums/
 
 Markdown 里**一个回车就是换行**（不要求空一行），写笔记时比较顺手。
 
+## 日志怎么读
+
+控制台（`start.cmd` 那个窗口，或 IDEA 的 Run 窗口）里只有两种东西：**启动日志**和**请求日志**。
+
+启动日志长这样，读一遍就知道它在干什么：
+
+```
+Tomcat started on port 8090 (http)          ← 服务器起来了
+HikariPool-1 - Start completed.             ← 数据库连接池建好了
+Migrating schema "public" to version "5"    ← Flyway 跑了第 5 个迁移
+Started MakeMeBetterApplication in 6.3s     ← 应用可以用了
+```
+
+请求日志是项目自己加的（`config/RequestLogFilter.java`），每处理完一个请求打一行：
+
+```
+GET /profile → 200 · 107ms
+POST /album/move → 302 · 8ms
+GET /nope → 404 · 5ms
+GET /setup → 200 · 599ms（有点慢）
+```
+
+- `302` 是"重定向"——表单提交成功后跳走，看到它就是保存成功了
+- 超过 500ms 会变成 `WARN` 并标「有点慢」，方便发现哪个页面变卡了
+- css / js / 图片不记（一个页面会连带请求十几个资源，记下来没法看）
+- 首次访问某个页面会慢一点（模板第一次编译），之后就快了，不是问题
+
+**不想看就关掉**：`application.yml` 里把 `app.request-log` 改成 `false`。
+
+**想把日志存成文件**：在 `application.yml` 加一行
+
+```yaml
+logging:
+  file:
+    name: logs/app.log
+```
+
+### 拿它练手
+
+1. 打开任意页面，看控制台多出来的一行，对照浏览器地址栏猜它对应哪个请求
+2. 点一次「保存」，看 `POST` 那行返回 `302`——这就是"提交后用重定向防止重复提交"（PRG 模式）
+3. 手动访问一个不存在的地址（比如 `/nope`），看 `404`
+4. 想看更细的分发过程，临时加 `logging.level.org.springframework.web=DEBUG`（很吵，看完记得删）
+
 ## 自检
 
 ```bash

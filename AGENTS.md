@@ -83,7 +83,7 @@ pom.xml
 mvnw / mvnw.cmd / .mvn/  Maven Wrapper
 deploy/start.cmd, open.cmd
 src/main/java/com/makemebetter/
-  config/                SecurityConfig、WebConfig
+  config/                SecurityConfig、WebConfig、RequestLogFilter（每个请求打一行日志）
   domain/                User、Entry、EntryKind、StudyCategory、EntryImage、Archive、ArchiveItem、Setting
   repository/            JPA 仓储（唯一写查询的地方）
   service/               EntryService、StudyService、FeedService、ArchiveService、AlbumService、SettingService、
@@ -148,6 +148,8 @@ V2 曾经因为「先加 CHECK、后改数据」在真库上失败）。
 - 一个文件超过 250 行就该拆（Admin 已经拆成三个控制器）
 - 新增页面必须同时适配深色模式与手机宽度（375px 起）
 - 不用 Lombok：手写构造器/getter，或直接用 `record`
+- 日志：`app.request-log`（默认 true）控制 `RequestLogFilter`，格式 `GET /album → 200 · 12ms`，
+  超过 500ms 升 WARN；静态资源和 `/files/` 不记
 
 ### 界面上的几条规矩
 

@@ -1,5 +1,6 @@
 package com.makemebetter;
 
+import com.makemebetter.config.RequestLogFilter;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -39,6 +40,14 @@ class FlowIntegrationTest {
 
     @Autowired
     private MockMvc mvc;
+
+    @Autowired
+    private RequestLogFilter requestLogFilter;
+
+    @Test
+    void 请求日志过滤器默认开着() {
+        assertNotNull(requestLogFilter, "app.request-log=true 时应该注册这个过滤器");
+    }
 
     @Test
     void 走一遍完整流程() throws Exception {
