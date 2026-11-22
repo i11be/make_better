@@ -55,13 +55,17 @@ public class AdminController {
     @GetMapping("/new")
     public String createForm(@RequestParam(name = "kind", required = false) String kind, Model model) {
         boolean picker = kind == null || kind.isBlank();
+        EntryKind target = EntryKind.fromCode(picker ? EntryKind.STUDY.getCode() : kind);
         model.addAttribute("title", "写一篇");
         model.addAttribute("mode", "new");
         model.addAttribute("picker", picker);
         model.addAttribute("kinds", EntryKind.values());
         model.addAttribute("categories", StudyCategory.values());
         model.addAttribute("formAction", "/admin/entries");
-        model.addAttribute("form", EntryForm.forKind(picker ? EntryKind.STUDY.getCode() : kind));
+        // 从栏目进来就回栏目，从后台进来才回后台
+        model.addAttribute("backUrl", picker ? "/admin" : target.getPath());
+        model.addAttribute("backLabel", picker ? "管理" : target.getLabel());
+        model.addAttribute("form", EntryForm.forKind(target.getCode()));
         return "admin/editor";
     }
 
@@ -93,6 +97,8 @@ public class AdminController {
         model.addAttribute("categories", StudyCategory.values());
         model.addAttribute("formAction", "/admin/entries/" + entry.getId());
         model.addAttribute("viewUrl", entry.getKind().getPath() + "/" + entry.getId());
+        model.addAttribute("backUrl", entry.getKind().getPath());
+        model.addAttribute("backLabel", entry.getKind().getLabel());
         model.addAttribute("form", toForm(entry));
         return "admin/editor";
     }
@@ -149,8 +155,11 @@ public class AdminController {
         model.addAttribute("categories", StudyCategory.values());
         model.addAttribute("error", error);
         model.addAttribute("formAction", "new".equals(mode) ? "/admin/entries" : "/admin/entries/" + form.getId());
+        EntryKind kind = EntryKind.fromCode(form.getKind());
+        model.addAttribute("backUrl", kind.getPath());
+        model.addAttribute("backLabel", kind.getLabel());
         if (!"new".equals(mode) && form.getId() != null) {
-            model.addAttribute("viewUrl", EntryKind.fromCode(form.getKind()).getPath() + "/" + form.getId());
+            model.addAttribute("viewUrl", kind.getPath() + "/" + form.getId());
         }
         model.addAttribute("form", form);
         return "admin/editor";

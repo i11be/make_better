@@ -151,11 +151,12 @@ class FlowIntegrationTest {
         assertNotNull(firstUrl);
         String firstItemId = firstUrl.replaceAll(".*/items/(\\d+).*$", "$1");
 
-        // 10.1 新建条目：进到一整页的写作界面
+        // 10.1 新建条目：进到一整页的写作界面；返回走前台档案页，不回后台
         mvc.perform(get("/admin/archives/" + archiveId + "/items/new").session(session))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("doc-title")))
-                .andExpect(content().string(containsString("doc-text")));
+                .andExpect(content().string(containsString("doc-text")))
+                .andExpect(content().string(containsString("href=\"/archive/" + archiveId + "\"")));
 
         // 10.2 保存后留在编辑器里（不跳走）
         mvc.perform(post("/admin/archives/" + archiveId + "/items/" + firstItemId).with(csrf()).session(session)
@@ -264,12 +265,15 @@ class FlowIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(not(containsString("kind-picker"))))
                 .andExpect(content().string(containsString("分类")))
-                .andExpect(content().string(not(containsString("name=\"mood\""))));
+                .andExpect(content().string(not(containsString("name=\"mood\""))))
+                // 返回回学习列表，不跳后台
+                .andExpect(content().string(containsString("href=\"/study\"")));
 
-        // 从管理进来还是能选
+        // 从管理进来还是能选，返回回管理
         mvc.perform(get("/admin/new").session(session))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("kind-picker")));
+                .andExpect(content().string(containsString("kind-picker")))
+                .andExpect(content().string(containsString("href=\"/admin\"")));
 
         // 14. 日记：没解锁被挡，解锁后能读
         mvc.perform(get("/diary").session(session))

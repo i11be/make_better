@@ -7,7 +7,7 @@
 <main class="wrap wrap-wide">
   <header class="page-head">
     <div>
-      <a class="back-link" th:href="@{/admin}">← 管理</a>
+      <a class="back-link" th:href="${backUrl}" th:text="${'← ' + backLabel}">← 管理</a>
       <h1 class="page-title" th:text="${form.kind == 'study' ? (mode == 'new' ? '写学习笔记' : '改学习笔记') : (mode == 'new' ? '写一篇' : '改一篇')}">写一篇</h1>
       <p class="sub">用 Markdown 写。Ctrl / ⌘ + S 保存。</p>
     </div>
@@ -98,7 +98,7 @@
 
     <div class="editor-foot">
       <button class="btn" type="submit">保存</button>
-      <a class="quiet" th:href="@{/admin}">取消</a>
+      <a class="quiet" th:href="${backUrl}">取消</a>
       <button type="submit" form="delete-form" class="linklike danger push-right"
               th:if="${mode == 'edit'}">删掉这篇</button>
     </div>
