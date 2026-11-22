@@ -25,6 +25,8 @@
         <a th:href="@{/archive}"><b th:text="${archiveCount}">0</b> 档案</a>
         <span class="sep">·</span>
         <a th:href="@{/diary}"><b th:text="${diaryCount}">0</b> 日记</a>
+        <span class="sep">·</span>
+        <a th:href="@{/album}"><b th:text="${albumCount}">0</b> 相册</a>
       </p>
     </div>
     <a class="btn btn-small btn-ghost profile-edit" th:if="${user != null}" th:href="@{/admin/settings}">改资料</a>

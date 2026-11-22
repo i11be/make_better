@@ -1,6 +1,7 @@
 package com.makemebetter.web;
 
 import com.makemebetter.domain.EntryKind;
+import com.makemebetter.service.AlbumService;
 import com.makemebetter.service.ArchiveService;
 import com.makemebetter.service.EntryService;
 import com.makemebetter.service.MarkdownService;
@@ -14,13 +15,15 @@ public class HomeController {
 
     private final EntryService entries;
     private final ArchiveService archives;
+    private final AlbumService albums;
     private final SettingService settings;
     private final MarkdownService markdown;
 
-    public HomeController(EntryService entries, ArchiveService archives, SettingService settings,
-                          MarkdownService markdown) {
+    public HomeController(EntryService entries, ArchiveService archives, AlbumService albums,
+                          SettingService settings, MarkdownService markdown) {
         this.entries = entries;
         this.archives = archives;
+        this.albums = albums;
         this.settings = settings;
         this.markdown = markdown;
     }
@@ -38,6 +41,7 @@ public class HomeController {
     public String profile(Model model) {
         model.addAttribute("title", "主页");
         counts(model);
+        model.addAttribute("albumCount", albums.totalCount());
         model.addAttribute("nowHtml", markdown.render(settings.get(SettingService.NOW_MD)));
         return "profile";
     }

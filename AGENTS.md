@@ -25,6 +25,8 @@
 - **档案（archive）**：一个主题一个档案（一本书、一个游戏）。档案本身没有正文、只有名字；
   里面挂很多条目，条目用整页写作台写（Markdown，可以插图），阅读时按左边的目录一条条看
 - **日记（diary）**：最私密，进这一区要**再输一次密码**
+- **相册（album）**：图片放 `data/uploads/albums/{图集}/`，新图先进 `_inbox`（待整理），
+  在网页上勾选归类；可移到别的图集、可移进 `.trash`。**以文件夹为准，不落数据库**
 - **管理**：写、改、删、改资料、改密码
 
 明确不做：开放注册、多用户、评论、点赞、访客统计、社交分享、关于页（已删）。
@@ -41,7 +43,7 @@
 | 数据库 | **MySQL 8**（`utf8mb4`，库 `make_me_better`，账号 `mmb`）+ **Spring Data JPA** + **Flyway** 管表结构；`dev` profile 可切 H2 文件库离线跑 |
 | 图片 | 存本地磁盘 `data/uploads`（数据库只存相对路径），用 JDK 自带 `ImageIO` 处理，**不引第三方图像库** |
 | Markdown | **commonmark-java**（默认不渲染裸 HTML） |
-| 端口 | 默认 `8090`（8080 在这台机器上被别的程序占了） |
+| 端口 | 默认 `8090`，只监听 `127.0.0.1`（局域网里连不上，换网络也不影响自己用） |
 
 **不要引入**：React / Vue / Tailwind、Node 前端构建、WebFlux、Redis、MyBatis-Plus、Docker 部署、Lombok。
 要换栈，先改这一节，再动代码。
@@ -56,7 +58,8 @@ mvnw.cmd package             # 出 jar
 
 - 配置：`src/main/resources/application.yml`（不含密码）+ `application-local.yml`（数据库账号密码，**不进版本库**）
 - profile：默认 `mysql`；`-Dspring-boot.run.profiles=dev` 切到 H2 文件库离线跑
-- 上传目录：`app.upload-dir`，默认 `./data/uploads`（头像 `avatars/`，动态配图 `年/月/日/`，档案配图 `archives/{档案id}/`）
+- 上传目录：`app.upload-dir`，默认 `./data/uploads`（头像 `avatars/`，动态配图 `年/月/日/`，
+  档案配图 `archives/{档案id}/`，相册 `albums/{图集}/`）
 - `deploy/start.cmd`：双击启动；`deploy/open.cmd`：等启动完成后用独立窗口打开
 
 ### 改模板时注意（踩过的坑）
@@ -79,9 +82,9 @@ src/main/java/com/makemebetter/
   config/                SecurityConfig、WebConfig
   domain/                User、Entry、EntryKind、StudyCategory、EntryImage、Archive、ArchiveItem、Setting
   repository/            JPA 仓储（唯一写查询的地方）
-  service/               EntryService、StudyService、FeedService、ArchiveService、SettingService、
+  service/               EntryService、StudyService、FeedService、ArchiveService、AlbumService、SettingService、
                          FileStorage（落盘）、ImageTools（裁图/缩略图）、DiaryGate、MarkdownService、ViewHelper
-  web/                   控制器（Auth/Home/Entry/Feed/Diary/Archive/File/Admin·AdminArchive·AdminSettings）、
+  web/                   控制器（Auth/Home/Entry/Feed/Diary/Archive/Album/File/Admin·AdminArchive·AdminSettings）、
                          两个拦截器、GlobalModelAttributes、form/
 src/main/resources/
   application*.yml       通用 / dev(H2) / mysql
@@ -107,6 +110,8 @@ src/test/java/           集成测试（见第 8 节）
 - `archive_items` — `id, archive_id(FK, CASCADE), title, body_md, sort, created_at, updated_at`
   - 条目里的图存在 `data/uploads/archives/{档案id}/`，正文用 Markdown 图片引用 `/files/…`
 - `settings` — `setting_key, setting_value`（站点名、备用签名、落款、现在）
+- **相册没有表**：`data/uploads/albums/{图集}/` 就是图集，`_inbox` 是待整理，`.trash` 是回收站，
+  `_thumbs` 是自动生成的缩略图；网页上的「归类」就是移动文件
 
 改表结构：只加新的 `V{n}__*.sql`，**不许改历史脚本**。
 **迁移脚本必须在「有数据」的真实 MySQL 上跑一遍**（H2 空库跑通不代表没问题：
@@ -143,7 +148,7 @@ mvnw.cmd test
 
 集成测试（MockMvc + H2 的 MySQL 兼容模式）覆盖：
 建账号 → 登录 → 改 ID/签名/头像 → 发带图动态 → 空动态被拒 → 建档案 → 加条目 → 前台读取 → 调整顺序
-→ 写学习 → 日记被挡 → 解锁 → 改 → 删 → 退出后后台被挡 → 404。
+→ 相册上传 / 归类 / 进回收站 → 写学习 → 日记被挡 → 解锁 → 改 → 删 → 退出后后台被挡 → 404。
 
 改完必须真的跑，别只看代码。
 

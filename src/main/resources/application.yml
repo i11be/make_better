@@ -26,6 +26,8 @@ spring:
 
 server:
   port: 8090
+  # 只让本机访问：局域网里的别人连不上，换网络也不影响自己用
+  address: 127.0.0.1
   # 学习笔记正文放宽到 16MB，和 entries.body_md 的 MEDIUMTEXT 对上
   tomcat:
     max-http-form-post-size: 16MB

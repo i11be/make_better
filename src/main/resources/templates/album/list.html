@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN" data-theme="auto">
+<head th:replace="~{fragments/head :: head(${title})}"></head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="wrap wrap-wide">
+  <header class="page-head">
+    <div>
+      <a class="back-link" th:href="@{/}">← 世界树</a>
+      <h1 class="page-title">相册</h1>
+      <p class="sub">新图先进「待整理」，勾一勾，归到图集里。</p>
+    </div>
+    <form class="album-upload" th:action="@{/album/upload}" method="post" enctype="multipart/form-data">
+      <input type="hidden" name="album" value="_inbox" />
+      <input type="file" name="file" accept="image/*" required />
+      <button class="btn btn-small" type="submit">传到待整理</button>
+    </form>
+  </header>
+
+  <p class="banner" th:if="${message != null}" th:text="${message}">好了</p>
+  <p class="form-error" th:if="${error != null}" th:text="${error}">出错了</p>
+
+  <section class="block" th:if="${not #lists.isEmpty(inbox)}">
+    <div class="block-head">
+      <h2>待整理</h2>
+      <span class="quiet" th:text="${#lists.size(inbox) + ' 张'}">0 张</span>
+    </div>
+
+    <form class="album-form" th:action="@{/album/move}" method="post">
+      <input type="hidden" name="from" value="_inbox" />
+
+      <div class="photo-grid">
+        <div class="photo" th:each="p, it : ${inbox}">
+          <a class="photo-open" th:href="${p.url}" th:attr="data-full=${p.url},data-lightbox=''">
+            <img th:src="${p.thumbUrl}" alt="" loading="lazy" />
+          </a>
+          <input type="checkbox" name="names" th:value="${p.name}" th:id="${'inbox-' + it.index}"
+                 th:attr="aria-label=${'选中 ' + p.name}" />
+        </div>
+      </div>
+
+      <div class="album-actions">
+        <select name="to">
+          <option value="">选一个图集</option>
+          <option th:each="a : ${albums}" th:value="${a.name}" th:text="${a.name}">图集</option>
+        </select>
+        <span class="album-or">或新建</span>
+        <input name="newAlbum" maxlength="40" aria-label="新图集名" />
+        <button class="btn btn-small" type="submit">归类</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="block">
+    <div class="block-head">
+      <h2>我的图集</h2>
+      <span class="quiet" th:text="${#lists.size(albums) + ' 个'}">0 个</span>
+    </div>
+
+    <p class="empty" th:if="${#lists.isEmpty(albums)}">还没有图集。上面选几张、右边填个名字，就能新建一个。</p>
+
+    <div class="album-grid" th:unless="${#lists.isEmpty(albums)}">
+      <a class="album-card" th:each="a : ${albums}" th:href="${'/album/' + a.url}">
+        <span class="album-cover">
+          <img th:if="${not #strings.isEmpty(a.coverUrl)}" th:src="${a.coverUrl}" alt="" loading="lazy" />
+        </span>
+        <span class="album-name" th:text="${a.name}">图集</span>
+        <span class="album-count" th:text="${a.count + ' 张'}">0 张</span>
+      </a>
+    </div>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

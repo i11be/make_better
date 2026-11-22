@@ -34,7 +34,8 @@ public class FileController {
         }
         return ResponseEntity.ok()
                 .contentType(mediaTypeOf(file.get()))
-                .cacheControl(CacheControl.maxAge(Duration.ofDays(30)).cachePublic())
+                // 私人图片，只让浏览器自己缓存，别进共享代理
+                .cacheControl(CacheControl.maxAge(Duration.ofDays(30)).cachePrivate())
                 .body(new FileSystemResource(file.get()));
     }
 

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN" data-theme="auto">
+<head th:replace="~{fragments/head :: head(${title})}"></head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="wrap wrap-wide">
+  <header class="page-head">
+    <div>
+      <a class="back-link" th:href="@{/album}">← 相册</a>
+      <h1 class="page-title" th:text="${album}">图集</h1>
+      <p class="sub" th:text="${#lists.size(photos) + ' 张'}">0 张</p>
+    </div>
+    <form class="album-upload" th:action="@{/album/upload}" method="post" enctype="multipart/form-data">
+      <input type="hidden" name="album" th:value="${album}" />
+      <input type="file" name="file" accept="image/*" required />
+      <button class="btn btn-small" type="submit">传到这里</button>
+    </form>
+  </header>
+
+  <p class="banner" th:if="${message != null}" th:text="${message}">好了</p>
+  <p class="form-error" th:if="${error != null}" th:text="${error}">出错了</p>
+
+  <p class="empty" th:if="${#lists.isEmpty(photos)}">这个图集还空着。</p>
+
+  <form class="album-form" th:unless="${#lists.isEmpty(photos)}"
+        th:action="@{/album/move}" method="post">
+    <input type="hidden" name="from" th:value="${album}" />
+
+    <div class="photo-grid">
+      <div class="photo" th:each="p, it : ${photos}">
+        <a class="photo-open" th:href="${p.url}" th:attr="data-full=${p.url},data-lightbox=''">
+          <img th:src="${p.thumbUrl}" alt="" loading="lazy" />
+        </a>
+        <input type="checkbox" name="names" th:value="${p.name}" th:id="${'shot-' + it.index}"
+               th:attr="aria-label=${'选中 ' + p.name}" />
+      </div>
+    </div>
+
+    <div class="album-actions">
+      <select name="to">
+        <option value="">移到哪个图集</option>
+        <option th:each="a : ${albums}" th:value="${a.name}" th:text="${a.name}">图集</option>
+      </select>
+      <span class="album-or">或新建</span>
+      <input name="newAlbum" maxlength="40" aria-label="新图集名" />
+      <button class="btn btn-small" type="submit">归类</button>
+      <button class="btn btn-small btn-ghost" type="submit" formaction="/album/trash">移到回收站</button>
+    </div>
+  </form>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

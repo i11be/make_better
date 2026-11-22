@@ -194,6 +194,56 @@ class FlowIntegrationTest {
                         .param("direction", "down"))
                 .andExpect(status().is3xxRedirection());
 
+        // 12.1 相册：上传到待整理 → 归类到新图集 → 图集里能看到 → 进回收站
+        mvc.perform(multipart("/album/upload").file(albumPhoto()).with(csrf()).session(session)
+                        .param("album", "_inbox"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/album"));
+
+        MvcResult albumPage = mvc.perform(get("/album").session(session))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("待整理")))
+                .andReturn();
+        java.util.regex.Matcher thumb = java.util.regex.Pattern
+                .compile("/album/thumb/_inbox/([^\"]+)")
+                .matcher(albumPage.getResponse().getContentAsString());
+        assertTrue(thumb.find(), "待整理里应该有一张图");
+        String inboxPhoto = thumb.group(1);
+
+        String albumName = "测试图集" + (System.currentTimeMillis() % 100000);
+        mvc.perform(post("/album/move").with(csrf()).session(session)
+                        .param("from", "_inbox")
+                        .param("names", inboxPhoto)
+                        .param("newAlbum", albumName))
+                .andExpect(status().is3xxRedirection());
+
+        mvc.perform(get("/album").session(session))
+                .andExpect(content().string(containsString(albumName)));
+
+        MvcResult inAlbum = mvc.perform(get("/album/{name}", albumName).session(session))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("/album/thumb/")))
+                .andReturn();
+        java.util.regex.Matcher inAlbumThumb = java.util.regex.Pattern
+                .compile("/album/thumb/[^/]+/([^\"]+)")
+                .matcher(inAlbum.getResponse().getContentAsString());
+        assertTrue(inAlbumThumb.find(), "图集里应该有这张图");
+
+        mvc.perform(post("/album/trash").with(csrf()).session(session)
+                        .param("from", albumName)
+                        .param("names", inAlbumThumb.group(1)))
+                .andExpect(status().is3xxRedirection());
+
+        mvc.perform(get("/album/{name}", albumName).session(session))
+                .andExpect(content().string(containsString("这个图集还空着")));
+
+        // 图集名不合法要被挡住
+        mvc.perform(post("/album/move").with(csrf()).session(session)
+                        .param("from", "_inbox")
+                        .param("names", inboxPhoto)
+                        .param("newAlbum", "../etc"))
+                .andExpect(status().is3xxRedirection());
+
         // 13. 写一条学习
         MvcResult created = mvc.perform(post("/admin/entries").session(session).with(csrf())
                         .param("kind", "study")
@@ -387,6 +437,11 @@ class FlowIntegrationTest {
     /** 档案条目里插的图，字段名是 file */
     private MockMultipartFile upload() throws IOException {
         return new MockMultipartFile("file", "page.png", "image/png", png());
+    }
+
+    /** 相册上传的图 */
+    private MockMultipartFile albumPhoto() throws IOException {
+        return new MockMultipartFile("file", "album.png", "image/png", png());
     }
 
     /** 造一张 8×8 的真 PNG，走 ImageIO 校验这一步 */
