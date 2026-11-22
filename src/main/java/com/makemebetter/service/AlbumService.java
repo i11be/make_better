@@ -35,6 +35,10 @@ public class AlbumService {
     public record Album(String name, String url, int count, String coverUrl) {
     }
 
+    /** 主页那条横条要用的汇总 */
+    public record Summary(int albums, int photos, List<String> covers) {
+    }
+
     public static final String INBOX = "_inbox";
     private static final String TRASH = ".trash";
     private static final String THUMBS = "_thumbs";
@@ -81,6 +85,30 @@ public class AlbumService {
             sum += album.count();
         }
         return sum;
+    }
+
+    /** 图集数 + 照片数 + 几张缩略图，给主页那条横条用 */
+    public Summary summary() {
+        List<Album> list = albums();
+        List<String> covers = new ArrayList<>();
+        for (Album album : list) {
+            int taken = 0;
+            for (Photo photo : photos(album.name())) {
+                covers.add(photo.thumbUrl());
+                taken++;
+                if (taken >= 3 || covers.size() >= 5) {
+                    break;
+                }
+            }
+            if (covers.size() >= 5) {
+                break;
+            }
+        }
+        int photos = 0;
+        for (Album album : list) {
+            photos += album.count();
+        }
+        return new Summary(list.size(), photos, covers);
     }
 
     public boolean albumExists(String name) {

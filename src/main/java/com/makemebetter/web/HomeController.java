@@ -41,7 +41,7 @@ public class HomeController {
     public String profile(Model model) {
         model.addAttribute("title", "主页");
         counts(model);
-        model.addAttribute("albumCount", albums.totalCount());
+        model.addAttribute("albumSummary", albums.summary());
         model.addAttribute("nowHtml", markdown.render(settings.get(SettingService.NOW_MD)));
         return "profile";
     }

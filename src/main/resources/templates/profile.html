@@ -25,12 +25,24 @@
         <a th:href="@{/archive}"><b th:text="${archiveCount}">0</b> 档案</a>
         <span class="sep">·</span>
         <a th:href="@{/diary}"><b th:text="${diaryCount}">0</b> 日记</a>
-        <span class="sep">·</span>
-        <a th:href="@{/album}"><b th:text="${albumCount}">0</b> 相册</a>
       </p>
     </div>
     <a class="btn btn-small btn-ghost profile-edit" th:if="${user != null}" th:href="@{/admin/settings}">改资料</a>
   </section>
+
+  <a class="album-strip" th:href="@{/album}">
+    <span class="album-strip-text">
+      <span class="album-strip-title">相册</span>
+      <span class="album-strip-meta"
+            th:text="${albumSummary.photos() > 0
+                      ? albumSummary.photos() + ' 张照片 · ' + albumSummary.albums() + ' 个图集'
+                      : '还没有照片，进去传第一张'}">还没有照片</span>
+    </span>
+    <span class="album-strip-thumbs" th:if="${not #lists.isEmpty(albumSummary.covers())}">
+      <img th:each="c : ${albumSummary.covers()}" th:src="${c}" alt="" loading="lazy" />
+    </span>
+    <span class="album-strip-go">进去看看 →</span>
+  </a>
 
   <section class="block" th:if="${!#strings.isEmpty(nowHtml)}">
     <div class="block-head">

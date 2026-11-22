@@ -3286,3 +3286,62 @@ html[data-theme="light"] .tree-node:focus-visible .tree-tag {
   font-size: 12.5px;
   color: var(--ink-dim);
 }
+
+/* 主页上的相册横条 */
+.album-strip {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 6px 0 34px;
+  padding: 16px 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--accent) 9%, transparent),
+    transparent 62%
+  );
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.2s ease;
+}
+
+.album-strip:hover {
+  border-color: var(--accent);
+}
+
+.album-strip-text {
+  display: grid;
+  gap: 3px;
+}
+
+.album-strip-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.album-strip-meta {
+  font-size: 12.5px;
+  color: var(--ink-dim);
+}
+
+.album-strip-thumbs {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.album-strip-thumbs img {
+  width: 46px;
+  height: 46px;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.album-strip-go {
+  font-size: 13px;
+  color: var(--accent);
+  white-space: nowrap;
+}
