@@ -19,8 +19,6 @@
   <div class="archive-grid" th:unless="${#lists.isEmpty(cards)}">
     <a class="archive-card" th:each="c : ${cards}" th:href="${'/archive/' + c.archive.id}">
       <h2 class="archive-card-title" th:text="${c.archive.title}">标题</h2>
-      <p class="archive-card-summary" th:if="${!#strings.isEmpty(c.archive.summary)}"
-         th:text="${c.archive.summary}">简介</p>
       <span class="archive-card-meta"
             th:text="${c.itemCount + ' 条 · 更新于 ' + @viewHelper.dateTime(c.archive.updatedAt)}">0 条</span>
     </a>

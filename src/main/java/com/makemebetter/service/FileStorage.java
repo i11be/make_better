@@ -71,6 +71,25 @@ public class FileStorage {
         return new Stored(dir + "/" + name + "." + format, image.getWidth(), image.getHeight());
     }
 
+    /** 档案条目的配图：原图 + 800px 宽缩略图，放在 archives/{档案id}/ 下 */
+    public Stored saveArchiveImage(Long archiveId, MultipartFile file) {
+        BufferedImage image = decode(file);
+        String format = formatOf(file.getOriginalFilename());
+        String name = UUID.randomUUID().toString().replace("-", "");
+        String dir = "archives/" + archiveId;
+
+        Path original = root.resolve(dir).resolve(name + "." + format);
+        Path thumb = root.resolve(dir).resolve(name + "_s.jpg");
+        try {
+            Files.createDirectories(original.getParent());
+            Files.write(original, file.getBytes());
+            write(thumb, images.toJpeg(images.fitWidth(image, THUMB_WIDTH), 0.82f));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return new Stored(dir + "/" + name + "." + format, image.getWidth(), image.getHeight());
+    }
+
     /** 相对路径 → 真实路径；越界、不存在的返回 empty */
     public Optional<Path> resolve(String relativePath) {
         if (relativePath == null || relativePath.isBlank()) {

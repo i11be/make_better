@@ -22,7 +22,8 @@
 - **动态（feed）**：短句 + 最多 9 张图，像 QQ 空间，点图看大图
 - **学习（study）**：长笔记，标题 + 分类（八股/算法，可不选）+ 一个标签 + Markdown 正文；
   发布日期保存时自动记，列表能按分类看、按标签分组
-- **档案（archive）**：一个主题一个档案（一本书、一个游戏），里面挂很多条目，条目也是 Markdown
+- **档案（archive）**：一个主题一个档案（一本书、一个游戏）。档案本身没有正文、只有名字；
+  里面挂很多条目，条目用整页写作台写（Markdown，可以插图），阅读时按左边的目录一条条看
 - **日记（diary）**：最私密，进这一区要**再输一次密码**
 - **管理**：写、改、删、改资料、改密码
 
@@ -55,7 +56,7 @@ mvnw.cmd package             # 出 jar
 
 - 配置：`src/main/resources/application.yml`（不含密码）+ `application-local.yml`（数据库账号密码，**不进版本库**）
 - profile：默认 `mysql`；`-Dspring-boot.run.profiles=dev` 切到 H2 文件库离线跑
-- 上传目录：`app.upload-dir`，默认 `./data/uploads`（头像 `avatars/`，动态配图 `年/月/日/`）
+- 上传目录：`app.upload-dir`，默认 `./data/uploads`（头像 `avatars/`，动态配图 `年/月/日/`，档案配图 `archives/{档案id}/`）
 - `deploy/start.cmd`：双击启动；`deploy/open.cmd`：等启动完成后用独立窗口打开
 
 ### 改模板时注意（踩过的坑）
@@ -85,7 +86,7 @@ src/main/java/com/makemebetter/
 src/main/resources/
   application*.yml       通用 / dev(H2) / mysql
   db/migration/          Flyway：V1__init.sql、V2__profile_feed_archive.sql、V3__study_category.sql、
-                         V4__entry_body_mediumtext.sql
+                         V4__entry_body_mediumtext.sql、V5__archive_drop_summary.sql
   templates/             fragments/ 公共片段、archive/ 档案页、admin/ 后台
   static/css/style.css   全站样式（唯一 CSS 文件）
   static/js/app.js       主题切换、编辑器、发动态选图、大图查看
@@ -102,8 +103,9 @@ src/test/java/           集成测试（见第 8 节）
   - 动态的 `title` 由正文第一行自动生成，`mood/tags` 留空
   - `kind` 用 VARCHAR + CHECK（不用 MySQL ENUM），为了同一份脚本能在 H2 上跑
 - `entry_images` — `id, entry_id(FK, ON DELETE CASCADE), path, width, height, sort`
-- `archives` — `id, title, summary, created_at, updated_at`
+- `archives` — `id, title, created_at, updated_at`（V5 去掉了 summary：档案不写正文）
 - `archive_items` — `id, archive_id(FK, CASCADE), title, body_md, sort, created_at, updated_at`
+  - 条目里的图存在 `data/uploads/archives/{档案id}/`，正文用 Markdown 图片引用 `/files/…`
 - `settings` — `setting_key, setting_value`（站点名、备用签名、落款、现在）
 
 改表结构：只加新的 `V{n}__*.sql`，**不许改历史脚本**。

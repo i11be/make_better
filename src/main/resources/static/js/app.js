@@ -65,80 +65,104 @@
   }
 
   // ---------- 点开看大图 ----------
+  var overlay = null;
+  var picture = null;
+  var boxUrls = [];
+  var boxIndex = 0;
+
+  var closeBox = function () {
+    if (!overlay) return;
+    overlay.remove();
+    overlay = null;
+    picture = null;
+    document.body.style.overflow = '';
+  };
+
+  var openAt = function (i) {
+    if (!boxUrls.length) return;
+    boxIndex = (i + boxUrls.length) % boxUrls.length;
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.className = 'lightbox';
+
+      picture = document.createElement('img');
+      overlay.appendChild(picture);
+
+      var closeBtn = document.createElement('button');
+      closeBtn.type = 'button';
+      closeBtn.className = 'lightbox-close';
+      closeBtn.textContent = '×';
+      closeBtn.addEventListener('click', closeBox);
+      overlay.appendChild(closeBtn);
+
+      if (boxUrls.length > 1) {
+        var prev = document.createElement('button');
+        prev.type = 'button';
+        prev.className = 'lightbox-prev';
+        prev.textContent = '‹';
+        prev.addEventListener('click', function (e) {
+          e.stopPropagation();
+          openAt(boxIndex - 1);
+        });
+        overlay.appendChild(prev);
+
+        var next = document.createElement('button');
+        next.type = 'button';
+        next.className = 'lightbox-next';
+        next.textContent = '›';
+        next.addEventListener('click', function (e) {
+          e.stopPropagation();
+          openAt(boxIndex + 1);
+        });
+        overlay.appendChild(next);
+      }
+
+      overlay.addEventListener('click', function (event) {
+        if (event.target === overlay) closeBox();
+      });
+
+      document.body.appendChild(overlay);
+      document.body.style.overflow = 'hidden';
+    }
+    picture.src = boxUrls[boxIndex];
+  };
+
+  var openBox = function (urls, i) {
+    boxUrls = urls;
+    openAt(i);
+  };
+
+  document.addEventListener('keydown', function (event) {
+    if (!overlay) return;
+    if (event.key === 'Escape') closeBox();
+    if (event.key === 'ArrowLeft') openAt(boxIndex - 1);
+    if (event.key === 'ArrowRight') openAt(boxIndex + 1);
+  });
+
   var imageLinks = Array.prototype.slice.call(document.querySelectorAll('[data-lightbox]'));
   if (imageLinks.length) {
-    var index = 0;
-    var overlay = null;
-    var picture = null;
-
-    var closeBox = function () {
-      if (!overlay) return;
-      overlay.remove();
-      overlay = null;
-      picture = null;
-      document.body.style.overflow = '';
-    };
-
-    var openAt = function (i) {
-      index = (i + imageLinks.length) % imageLinks.length;
-      if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.className = 'lightbox';
-
-        picture = document.createElement('img');
-        overlay.appendChild(picture);
-
-        var closeBtn = document.createElement('button');
-        closeBtn.type = 'button';
-        closeBtn.className = 'lightbox-close';
-        closeBtn.textContent = '×';
-        closeBtn.addEventListener('click', closeBox);
-        overlay.appendChild(closeBtn);
-
-        if (imageLinks.length > 1) {
-          var prev = document.createElement('button');
-          prev.type = 'button';
-          prev.className = 'lightbox-prev';
-          prev.textContent = '‹';
-          prev.addEventListener('click', function (e) {
-            e.stopPropagation();
-            openAt(index - 1);
-          });
-          overlay.appendChild(prev);
-
-          var next = document.createElement('button');
-          next.type = 'button';
-          next.className = 'lightbox-next';
-          next.textContent = '›';
-          next.addEventListener('click', function (e) {
-            e.stopPropagation();
-            openAt(index + 1);
-          });
-          overlay.appendChild(next);
-        }
-
-        overlay.addEventListener('click', function (event) {
-          if (event.target === overlay) closeBox();
-        });
-
-        document.body.appendChild(overlay);
-        document.body.style.overflow = 'hidden';
-      }
-      picture.src = imageLinks[index].dataset.full;
-    };
-
+    var linkUrls = imageLinks.map(function (link) {
+      return link.dataset.full;
+    });
     imageLinks.forEach(function (link, i) {
       link.addEventListener('click', function (event) {
         event.preventDefault();
-        openAt(i);
+        openBox(linkUrls, i);
       });
     });
+  }
 
-    document.addEventListener('keydown', function (event) {
-      if (!overlay) return;
-      if (event.key === 'Escape') closeBox();
-      if (event.key === 'ArrowLeft') openAt(index - 1);
-      if (event.key === 'ArrowRight') openAt(index + 1);
+  // 正文里插的图也能点开
+  var proseImages = Array.prototype.slice.call(document.querySelectorAll('.prose img'));
+  if (proseImages.length) {
+    var proseUrls = proseImages.map(function (img) {
+      return img.src;
+    });
+    proseImages.forEach(function (img, i) {
+      img.classList.add('zoomable');
+      img.addEventListener('click', function () {
+        openBox(proseUrls, i);
+      });
     });
   }
 
@@ -251,6 +275,47 @@
     window.clearTimeout(timer);
     timer = window.setTimeout(refreshPreview, 350);
   });
+
+  // 插图：传到 /admin/archives/{id}/images，再把 Markdown 图片插到光标处
+  var imageBtn = document.getElementById('doc-image');
+  var imageFile = document.getElementById('doc-file');
+  var uploadUrl = editorForm.dataset.uploadUrl;
+  if (imageBtn && imageFile && uploadUrl) {
+    imageBtn.addEventListener('click', function () {
+      imageFile.click();
+    });
+
+    imageFile.addEventListener('change', function () {
+      var file = imageFile.files && imageFile.files[0];
+      if (!file) return;
+
+      var data = new FormData();
+      data.append('file', file);
+      imageBtn.disabled = true;
+      imageBtn.textContent = '上传中…';
+
+      fetch(uploadUrl, { method: 'POST', headers: { 'X-CSRF-TOKEN': csrf }, body: data })
+        .then(function (res) {
+          if (!res.ok) throw new Error('upload failed');
+          return res.json();
+        })
+        .then(function (info) {
+          var alt = (file.name || '图').replace(/\.[^.]+$/, '');
+          var markdown = '![' + alt + '](' + info.url + ')';
+          textarea.setRangeText(markdown, textarea.selectionStart, textarea.selectionEnd, 'end');
+          textarea.focus();
+          textarea.dispatchEvent(new Event('input'));
+        })
+        .catch(function () {
+          window.alert('图片没传上去，换个格式或者小一点的试试。');
+        })
+        .then(function () {
+          imageBtn.disabled = false;
+          imageBtn.textContent = '插图';
+          imageFile.value = '';
+        });
+    });
+  }
 
   // Ctrl / ⌘ + S 保存
   editorForm.addEventListener('keydown', function (event) {

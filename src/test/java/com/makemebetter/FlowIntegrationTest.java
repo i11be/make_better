@@ -149,7 +149,26 @@ class FlowIntegrationTest {
                 .andReturn();
         String firstUrl = first.getResponse().getRedirectedUrl();
         assertNotNull(firstUrl);
-        String firstItemId = firstUrl.replaceAll(".*/items/(\\d+)$", "$1");
+        String firstItemId = firstUrl.replaceAll(".*/items/(\\d+).*$", "$1");
+
+        // 10.1 新建条目：进到一整页的写作界面
+        mvc.perform(get("/admin/archives/" + archiveId + "/items/new").session(session))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("doc-title")))
+                .andExpect(content().string(containsString("doc-text")));
+
+        // 10.2 保存后留在编辑器里（不跳走）
+        mvc.perform(post("/admin/archives/" + archiveId + "/items/" + firstItemId).with(csrf()).session(session)
+                        .param("title", "序章")
+                        .param("bodyMd", "旅行者**醒来**的地方。"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/archives/" + archiveId + "/items/" + firstItemId + "?ok=saved"));
+
+        // 10.3 条目里能传图
+        mvc.perform(multipart("/admin/archives/" + archiveId + "/images").file(upload())
+                        .with(csrf()).session(session))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("/files/archives/")));
 
         mvc.perform(post("/admin/archives/" + archiveId + "/items").with(csrf()).session(session)
                         .param("title", "第一章")
@@ -178,7 +197,7 @@ class FlowIntegrationTest {
         MvcResult created = mvc.perform(post("/admin/entries").session(session).with(csrf())
                         .param("kind", "study")
                         .param("title", "测试学习条目")
-                        .param("bodyMd", "这是 **粗体** 和 `代码`")
+                        .param("bodyMd", "这是 **粗体** 和 `代码`\n第二行")
                         .param("entryDate", "2026-01-02")
                         .param("mood", "专注")
                         .param("category", "bagu")
@@ -195,6 +214,9 @@ class FlowIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("<strong>粗体</strong>")))
                 .andExpect(content().string(containsString("<code>代码</code>")))
+                // 单个换行要真的换行
+                .andExpect(content().string(containsString("<br />")))
+                .andExpect(content().string(containsString("第二行")))
                 .andExpect(content().string(containsString("八股")))
                 .andExpect(content().string(containsString("#二分")))
                 // 「改这篇」的链接得是真实 id，不能是字面量 entry.id
@@ -356,6 +378,11 @@ class FlowIntegrationTest {
 
     private MockMultipartFile photo(String name) throws IOException {
         return new MockMultipartFile("photos", name, "image/png", png());
+    }
+
+    /** 档案条目里插的图，字段名是 file */
+    private MockMultipartFile upload() throws IOException {
+        return new MockMultipartFile("file", "page.png", "image/png", png());
     }
 
     /** 造一张 8×8 的真 PNG，走 ImageIO 校验这一步 */

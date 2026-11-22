@@ -9,13 +9,14 @@
     <div>
       <a class="back-link" th:href="@{/archive}">← 档案</a>
       <h1 class="page-title" th:text="${archive.title}">档案标题</h1>
-      <p class="sub" th:if="${!#strings.isEmpty(archive.summary)}" th:text="${archive.summary}">简介</p>
     </div>
-    <a class="quiet" th:if="${user != null}" th:href="${'/admin/archives/' + archive.id}">编辑档案 →</a>
+    <div class="head-actions">
+      <a class="quiet" th:if="${user != null}" th:href="${'/admin/archives/' + archive.id}">管理档案 →</a>
+    </div>
   </header>
 
   <p class="empty" th:if="${#lists.isEmpty(items)}">
-    这个档案还没有条目。点右上角「编辑档案」开始写。
+    这个档案还没有条目。点右上角「管理档案」开始写。
   </p>
 
   <div class="archive-body" th:unless="${#lists.isEmpty(items)}">
@@ -32,11 +33,25 @@
 
     <article class="archive-content" th:if="${current != null}">
       <h2 class="entry-title" th:text="${current.title}">条目标题</h2>
-      <p class="quiet quiet-dim" th:text="${'写于 ' + @viewHelper.dateTime(current.updatedAt)}">时间</p>
-      <div class="prose" th:utext="${html}"></div>
-      <nav class="archive-pager">
+      <p class="meta-line">
+        <span class="quiet" th:text="${'写于 ' + @viewHelper.dateTime(current.updatedAt)}">时间</span>
         <a class="quiet" th:if="${user != null}"
            th:href="${'/admin/archives/' + archive.id + '/items/' + current.id}">改这一条 →</a>
+      </p>
+
+      <div class="prose" th:utext="${html}"></div>
+
+      <nav class="archive-pager" th:if="${prev != null or next != null}">
+        <a class="pager-link" th:if="${prev != null}"
+           th:href="${'/archive/' + archive.id + '?item=' + prev.id}">
+          <span class="pager-dir">← 上一条</span>
+          <span class="pager-title" th:text="${prev.title}">标题</span>
+        </a>
+        <a class="pager-link pager-next" th:if="${next != null}"
+           th:href="${'/archive/' + archive.id + '?item=' + next.id}">
+          <span class="pager-dir">下一条 →</span>
+          <span class="pager-title" th:text="${next.title}">标题</span>
+        </a>
       </nav>
     </article>
   </div>

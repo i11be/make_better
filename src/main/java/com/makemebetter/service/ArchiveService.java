@@ -37,13 +37,13 @@ public class ArchiveService {
     }
 
     @Transactional
-    public Archive create(String title, String summary) {
-        return archives.save(new Archive(title, summary));
+    public Archive create(String title) {
+        return archives.save(new Archive(title));
     }
 
     @Transactional
-    public Archive update(Archive archive, String title, String summary) {
-        archive.update(title, summary);
+    public Archive update(Archive archive, String title) {
+        archive.update(title);
         return archives.save(archive);
     }
 

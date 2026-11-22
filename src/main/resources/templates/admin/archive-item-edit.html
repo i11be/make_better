@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN" data-theme="auto">
+<head th:replace="~{fragments/head :: head(${title})}"></head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="wrap wrap-wide doc-page">
+  <div class="doc-bar">
+    <a class="back-link" th:href="${'/admin/archives/' + archive.id}"
+       th:text="${'← ' + archive.title}">← 档案</a>
+    <span class="doc-status" th:if="${param.ok != null}"
+          th:text="${param.ok[0] == 'created' ? '建好了' : '已保存'}">已保存</span>
+    <span class="doc-meta" th:if="${item != null}"
+          th:text="${'更新于 ' + @viewHelper.dateTime(item.updatedAt)}">更新于</span>
+
+    <div class="doc-actions">
+      <button type="button" class="btn btn-small btn-ghost" id="doc-image">插图</button>
+      <button type="submit" form="editor-form" class="btn btn-small">保存</button>
+    </div>
+  </div>
+
+  <form id="editor-form" method="post" class="doc-sheet"
+        th:action="${formAction}" th:attr="data-upload-url=${uploadUrl}">
+    <p class="doc-label">标题</p>
+    <input class="doc-title" name="title" maxlength="120" required
+           th:value="${item != null ? item.title : ''}" />
+
+    <div class="doc-tools">
+      <button type="button" class="toolbtn" data-md="**" data-placeholder="加粗">B</button>
+      <button type="button" class="toolbtn" data-md="*" data-placeholder="斜体"><em>I</em></button>
+      <button type="button" class="toolbtn" data-md="## " data-placeholder="小标题">H</button>
+      <button type="button" class="toolbtn" data-md="- " data-placeholder="一条">≡</button>
+      <button type="button" class="toolbtn" data-md="&gt; " data-placeholder="引用">❝</button>
+      <button type="button" class="toolbtn" data-md="`" data-placeholder="代码">code</button>
+      <button type="button" class="toolbtn" id="preview-toggle">预览</button>
+    </div>
+
+    <textarea name="bodyMd" id="bodyMd" class="doc-text" spellcheck="false"
+              th:text="${item != null ? item.bodyMd : ''}"></textarea>
+
+    <div class="doc-preview prose" id="preview" hidden></div>
+
+    <input type="file" id="doc-file" accept="image/*" hidden />
+  </form>
+
+  <div class="doc-foot">
+    <button type="submit" form="editor-form" class="btn">保存</button>
+    <a class="quiet" th:href="${'/admin/archives/' + archive.id}">返回档案</a>
+    <form th:if="${item != null}" class="inline push-right" method="post"
+          th:action="${'/admin/archives/' + archive.id + '/items/' + item.id + '/delete'}"
+          th:attr="data-confirm=${'删掉「' + item.title + '」？不能撤回。'}">
+      <button type="submit" class="linklike danger">删掉这条</button>
+    </form>
+  </div>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

@@ -20,16 +20,10 @@
   <section class="block">
     <div class="block-head"><h2>新建档案</h2></div>
     <form th:action="@{/admin/archives}" method="post" class="stack">
-      <div class="row3">
-        <label class="field">
-          <span>名字</span>
-          <input name="title" maxlength="120" placeholder="原神 / 三体 / Java 并发" required />
-        </label>
-        <label class="field row-span-2">
-          <span>一句话简介（可空）</span>
-          <input name="summary" maxlength="300" placeholder="这个档案是干什么的" />
-        </label>
-      </div>
+      <label class="field">
+        <span>名字</span>
+        <input name="title" maxlength="120" required />
+      </label>
       <button class="btn btn-small" type="submit">建档案</button>
     </form>
   </section>
@@ -38,11 +32,10 @@
     <div class="block-head"><h2>全部档案</h2></div>
     <p class="empty" th:if="${#lists.isEmpty(archives)}">还没有档案。</p>
     <table class="table" th:unless="${#lists.isEmpty(archives)}">
-      <thead><tr><th>名字</th><th>简介</th><th>更新</th><th>操作</th></tr></thead>
+      <thead><tr><th>名字</th><th>更新</th><th>操作</th></tr></thead>
       <tbody>
       <tr th:each="a : ${archives}">
         <td class="td-title"><a th:href="${'/admin/archives/' + a.id}" th:text="${a.title}">标题</a></td>
-        <td th:text="${a.summary}" class="td-summary">—</td>
         <td class="td-date" th:text="${@viewHelper.dateTime(a.updatedAt)}">时间</td>
         <td class="td-actions">
           <a class="quiet" th:href="${'/archive/' + a.id}">看</a>

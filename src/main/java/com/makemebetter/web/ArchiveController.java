@@ -57,10 +57,17 @@ public class ArchiveController {
             current = items.get(0);
         }
 
+        // 上一条 / 下一条
+        int index = current == null ? -1 : items.indexOf(current);
+        ArchiveItem prev = index > 0 ? items.get(index - 1) : null;
+        ArchiveItem next = index >= 0 && index < items.size() - 1 ? items.get(index + 1) : null;
+
         model.addAttribute("title", archive.getTitle());
         model.addAttribute("archive", archive);
         model.addAttribute("items", items);
         model.addAttribute("current", current);
+        model.addAttribute("prev", prev);
+        model.addAttribute("next", next);
         model.addAttribute("html", current == null ? "" : markdown.render(current.getBodyMd()));
         return "archive/detail";
     }

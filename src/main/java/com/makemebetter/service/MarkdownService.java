@@ -13,7 +13,10 @@ import org.springframework.stereotype.Service;
 public class MarkdownService {
 
     private final Parser parser = Parser.builder().build();
-    private final HtmlRenderer renderer = HtmlRenderer.builder().build();
+    private final HtmlRenderer renderer = HtmlRenderer.builder()
+            // 单个换行也当换行。Markdown 默认把软换行合并成一行，写笔记时太反直觉
+            .softbreak("<br />\n")
+            .build();
 
     public String render(String markdown) {
         if (markdown == null || markdown.isBlank()) {

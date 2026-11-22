@@ -11,7 +11,7 @@ import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
 
-/** 档案：一个主题（一本书、一个游戏），里面挂很多条目。 */
+/** 档案：一个主题（一本书、一个游戏），只有名字，内容全在条目里。 */
 @Entity
 @Table(name = "archives")
 public class Archive {
@@ -23,9 +23,6 @@ public class Archive {
     @Column(nullable = false, length = 120)
     private String title;
 
-    @Column(nullable = false, length = 300)
-    private String summary = "";
-
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -35,9 +32,8 @@ public class Archive {
     protected Archive() {
     }
 
-    public Archive(String title, String summary) {
+    public Archive(String title) {
         this.title = title;
-        this.summary = summary;
         touch();
     }
 
@@ -59,9 +55,8 @@ public class Archive {
         this.updatedAt = now;
     }
 
-    public void update(String title, String summary) {
+    public void update(String title) {
         this.title = title;
-        this.summary = summary;
     }
 
     public Long getId() {
@@ -70,10 +65,6 @@ public class Archive {
 
     public String getTitle() {
         return title;
-    }
-
-    public String getSummary() {
-        return summary;
     }
 
     public LocalDateTime getCreatedAt() {
