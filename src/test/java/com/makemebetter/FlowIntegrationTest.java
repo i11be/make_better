@@ -203,6 +203,8 @@ class FlowIntegrationTest {
         MvcResult albumPage = mvc.perform(get("/album").session(session))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("待整理")))
+                // 缩略图要能被灯箱接管，否则点了会跳去原图
+                .andExpect(content().string(containsString("data-lightbox")))
                 .andReturn();
         java.util.regex.Matcher thumb = java.util.regex.Pattern
                 .compile("/album/thumb/_inbox/([^\"]+)")

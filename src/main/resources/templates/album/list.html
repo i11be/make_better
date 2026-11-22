@@ -32,7 +32,7 @@
 
       <div class="photo-grid">
         <div class="photo" th:each="p, it : ${inbox}">
-          <a class="photo-open" th:href="${p.url}" th:attr="data-full=${p.url},data-lightbox=''">
+          <a class="photo-open" th:href="${p.url}" th:attr="data-full=${p.url}" data-lightbox>
             <img th:src="${p.thumbUrl}" alt="" loading="lazy" />
           </a>
           <input type="checkbox" name="names" th:value="${p.name}" th:id="${'inbox-' + it.index}"
