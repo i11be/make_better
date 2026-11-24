@@ -229,7 +229,7 @@ class FlowIntegrationTest {
                 .andExpect(content().string(containsString("data-lightbox")))
                 .andReturn();
         java.util.regex.Matcher thumb = java.util.regex.Pattern
-                .compile("/album/thumb/_inbox/([^\"]+)")
+                .compile("/album/thumb/_inbox/([^\"?]+)")
                 .matcher(albumPage.getResponse().getContentAsString());
         assertTrue(thumb.find(), "待整理里应该有一张图");
         String inboxPhoto = thumb.group(1);
@@ -249,7 +249,7 @@ class FlowIntegrationTest {
                 .andExpect(content().string(containsString("/album/thumb/")))
                 .andReturn();
         java.util.regex.Matcher inAlbumThumb = java.util.regex.Pattern
-                .compile("/album/thumb/[^/]+/([^\"]+)")
+                .compile("/album/thumb/[^/]+/([^\"?]+)")
                 .matcher(inAlbum.getResponse().getContentAsString());
         assertTrue(inAlbumThumb.find(), "图集里应该有这张图");
 

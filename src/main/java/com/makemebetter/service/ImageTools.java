@@ -7,6 +7,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
@@ -38,6 +39,8 @@ public class ImageTools {
         BufferedImage target = new BufferedImage(size, size, BufferedImage.TYPE_INT_RGB);
         Graphics2D g = target.createGraphics();
         try {
+            g.setColor(Color.WHITE);
+            g.fillRect(0, 0, size, size);
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
             g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
             g.drawImage(source, 0, 0, size, size, x, y, x + side, y + side, null);
@@ -56,6 +59,9 @@ public class ImageTools {
         BufferedImage target = new BufferedImage(maxWidth, height, BufferedImage.TYPE_INT_RGB);
         Graphics2D g = target.createGraphics();
         try {
+            // 透明 PNG 转 JPEG 时先铺白底，否则透明的地方会变成黑块
+            g.setColor(Color.WHITE);
+            g.fillRect(0, 0, maxWidth, height);
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
             g.drawImage(source, 0, 0, maxWidth, height, null);
         } finally {

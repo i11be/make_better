@@ -66,17 +66,33 @@ public class AlbumController {
                 .body(new FileSystemResource(path));
     }
 
-    /** 缩略图：第一次访问时现生成，之后直接读 */
+    /** 缩略图：第一次访问时现生成，之后直接读。生成不了就 404，并告诉浏览器别缓存这次失败 */
     @GetMapping("/thumb/{name}/{file}")
     public ResponseEntity<Resource> thumb(@PathVariable String name, @PathVariable String file) {
-        Path path = albums.thumb(name, file);
-        if (path == null) {
-            return ResponseEntity.notFound().build();
+        AlbumService.Thumb thumb = albums.thumb(name, file);
+        if (thumb == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .cacheControl(CacheControl.noStore())
+                    .build();
         }
         return ResponseEntity.ok()
-                .contentType(MediaType.IMAGE_JPEG)
+                .contentType(thumb.jpeg() ? MediaType.IMAGE_JPEG : mediaTypeOf(thumb.path()))
                 .cacheControl(CacheControl.maxAge(Duration.ofDays(7)).cachePrivate())
-                .body(new FileSystemResource(path));
+                .body(new FileSystemResource(thumb.path()));
+    }
+
+    private MediaType mediaTypeOf(Path file) {
+        String name = file.getFileName().toString().toLowerCase();
+        if (name.endsWith(".png")) {
+            return MediaType.IMAGE_PNG;
+        }
+        if (name.endsWith(".webp")) {
+            return MediaType.parseMediaType("image/webp");
+        }
+        if (name.endsWith(".gif")) {
+            return MediaType.IMAGE_GIF;
+        }
+        return MediaType.IMAGE_JPEG;
     }
 
     @PostMapping("/upload")

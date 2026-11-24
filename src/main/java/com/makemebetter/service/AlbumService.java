@@ -148,7 +148,7 @@ public class AlbumService {
                         ? "/files/albums/" + encode(album) + "/" + encode(name)
                         : "/album/view/" + encode(album) + "/" + encode(name);
                 photos.add(new Photo(name, url,
-                        "/album/thumb/" + encode(album) + "/" + encode(name),
+                        "/album/thumb/" + encode(album) + "/" + encode(name) + "?v=2",
                         Files.size(file)));
             } catch (IOException ignored) {
                 // 读不到大小就跳过这一张
@@ -254,11 +254,17 @@ public class AlbumService {
         return moved;
     }
 
+    /** 缩略图结果：jpeg=true 表示这是生成好的 JPEG，false 表示直接给原图 */
+    public record Thumb(Path path, boolean jpeg) {
+    }
+
     /**
      * 缩略图：没有就现生成一张 800px 宽的。
-     * ImageIO 解不了的（HEIC 这类）先用 ffmpeg 转一张 JPEG，再缩；实在转不了就退回原图。
+     * ImageIO 解不了的（HEIC 这类）先用 ffmpeg 转一张 JPEG，再缩。
+     * 转不出来时：浏览器认得的格式（webp）直接给原图，认不得的返回 null（调用方 404，
+     * 绝不能再把原图当 JPEG 发出去，那会被浏览器缓存成一张坏图）。
      */
-    public Path thumb(String album, String name) {
+    public Thumb thumb(String album, String name) {
         Path dir = folder(album);
         if (dir == null) {
             return null;
@@ -270,26 +276,25 @@ public class AlbumService {
         Path thumbDir = dir.resolve(THUMBS);
         Path thumb = thumbDir.resolve(baseOf(name) + "_s.jpg");
         if (Files.isRegularFile(thumb)) {
-            return thumb;
+            return new Thumb(thumb, true);
         }
         try {
             BufferedImage image = ImageIO.read(src.toFile());
             if (image == null) {
-                // JDK 解不了：借 ffmpeg 转一张大图，再缩
                 Path view = ensureViewFile(dir, name);
                 if (view == null) {
-                    return src;
+                    return isWebFormat(src) ? new Thumb(src, false) : null;
                 }
                 image = ImageIO.read(view.toFile());
                 if (image == null) {
-                    return src;
+                    return isWebFormat(src) ? new Thumb(src, false) : null;
                 }
             }
             Files.createDirectories(thumbDir);
             Files.write(thumb, images.toJpeg(images.fitWidth(image, THUMB_WIDTH), 0.82f));
-            return thumb;
+            return new Thumb(thumb, true);
         } catch (IOException | RuntimeException e) {
-            return src;
+            return isWebFormat(src) ? new Thumb(src, false) : null;
         }
     }
 
