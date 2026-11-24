@@ -3,7 +3,9 @@ package com.makemebetter;
 import com.makemebetter.config.RequestLogFilter;
 import com.makemebetter.domain.Entry;
 import com.makemebetter.domain.EntryKind;
+import com.makemebetter.domain.StudySession;
 import com.makemebetter.service.EntryService;
+import com.makemebetter.service.StudyTimerService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -22,6 +24,7 @@ import java.time.LocalDate;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -50,6 +53,9 @@ class FlowIntegrationTest {
 
     @Autowired
     private EntryService entryService;
+
+    @Autowired
+    private StudyTimerService timerService;
 
     @Test
     void 请求日志过滤器默认开着() {
@@ -436,7 +442,38 @@ class FlowIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin?ok=deleted"));
 
-        // 17. 404（登录状态下）
+        // 17. 学习计时：开始 → 时间到 → 计入统计；放弃的不算
+        mvc.perform(post("/timer/start").session(session).with(csrf()).param("customMinutes", "45"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/profile"));
+
+        StudySession running = timerService.current().orElseThrow();
+        assertTrue(running.getPlannedMinutes() == 45, "自定义分钟数没生效");
+
+        mvc.perform(get("/profile").session(session))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("seg-clock")))
+                .andExpect(content().string(containsString("data-remaining=")))
+                .andExpect(content().string(containsString("45 分钟")));
+
+        // 到点（页面会调这个接口），再调一次也不会重复记账
+        mvc.perform(post("/timer/finish").session(session).with(csrf())
+                        .param("id", String.valueOf(running.getId())))
+                .andExpect(status().isNoContent());
+        mvc.perform(post("/timer/finish").session(session).with(csrf())
+                        .param("id", String.valueOf(running.getId())))
+                .andExpect(status().isNoContent());
+
+        assertEquals(45 * 60L, timerService.stats().today());
+
+        // 放弃的那段不算
+        StudySession abandoned = timerService.start(30);
+        mvc.perform(post("/timer/cancel").session(session).with(csrf())
+                        .param("id", String.valueOf(abandoned.getId())))
+                .andExpect(status().is3xxRedirection());
+        assertEquals(45 * 60L, timerService.stats().today());
+
+        // 18. 404（登录状态下）
         mvc.perform(get("/no-such-page").session(session)).andExpect(status().isNotFound());
 
         // 18. 退出之后整站都要重新登录，不只是后台

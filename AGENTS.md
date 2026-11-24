@@ -19,7 +19,8 @@
 
 - **首页**：只有一张世界树图，连顶栏都没有，整页就是这棵树；五个入口（主页、动态、学习、档案、日记）挂在树枝上，不显示条目正文
 - **主页（profile）**：头像 + ID + 一句签名 + 四个统计（动态/学习/档案/日记）+「现在」；
-  资料卡下面还有一条「相册」横条（照片数、图集数、几张缩略图，点进 /album）
+  中间是相册横条；再往下是**学习计时**（七段数码管倒计时，30/60 分钟或自定义）和
+  今日/本周/本月/累计四格时长
 - **动态（feed）**：短句 + 最多 9 张图，像 QQ 空间，点图看大图
 - **学习（study）**：长笔记，标题 + 分类（八股/算法，可不选）+ 一个标签 + Markdown 正文；
   发布日期保存时自动记，列表能按分类看、按标签分组
@@ -88,13 +89,14 @@ src/main/java/com/makemebetter/
   domain/                User、Entry、EntryKind、StudyCategory、EntryImage、Archive、ArchiveItem、Setting
   repository/            JPA 仓储（唯一写查询的地方）
   service/               EntryService、StudyService、FeedService、ArchiveService、AlbumService、SettingService、
-                         FileStorage（落盘）、ImageTools（裁图/缩略图）、DiaryGate、MarkdownService、ViewHelper
-  web/                   控制器（Auth/Home/Entry/Feed/Diary/Archive/Album/File/Admin·AdminArchive·AdminSettings）、
+                         StudyTimerService（学习计时）、FileStorage（落盘）、ImageTools（裁图/缩略图）、
+                         DiaryGate、MarkdownService、ViewHelper
+  web/                   控制器（Auth/Home/Entry/Feed/Diary/Archive/Album/Timer/File/Admin·AdminArchive·AdminSettings）、
                          两个拦截器、GlobalModelAttributes、form/
 src/main/resources/
   application*.yml       通用 / dev(H2) / mysql
   db/migration/          Flyway：V1__init.sql、V2__profile_feed_archive.sql、V3__study_category.sql、
-                         V4__entry_body_mediumtext.sql、V5__archive_drop_summary.sql
+                         V4__entry_body_mediumtext.sql、V5__archive_drop_summary.sql、V6__study_sessions.sql
   templates/             index.html 世界树、profile、entry.html 学习详情、
                          study.html、diary.html / diary-detail.html / diary-edit.html、
                          feed.html / feed-detail.html、archive/ 档案页、album/ 相册页、
@@ -118,6 +120,9 @@ src/test/java/           集成测试（见第 8 节）
 - `archive_items` — `id, archive_id(FK, CASCADE), title, body_md, sort, created_at, updated_at`
   - 条目里的图存在 `data/uploads/archives/{档案id}/`，正文用 Markdown 图片引用 `/files/…`
 - `settings` — `setting_key, setting_value`（站点名、备用签名、落款、现在）
+- `study_sessions` — `id, started_at, planned_minutes, ended_at, status(RUNNING|DONE|CANCELLED)`
+  - 一次计时一条；主页四段统计只累加 `DONE`，按 `ended_at` 的日期归到今日/本周（周一起）/本月/累计
+  - 页面关掉也不会丢：读主页时把「过了计划时间还挂着 RUNNING」的补记成 DONE
 - **相册没有表**：`data/uploads/albums/{图集}/` 就是图集，`_inbox` 是待整理，`.trash` 是回收站，
   `_thumbs` 是自动生成的缩略图；网页上的「归类」就是移动文件
 
@@ -173,7 +178,7 @@ mvnw.cmd test
 集成测试（MockMvc + H2 的 MySQL 兼容模式）覆盖：
 建账号 → 登录 → 改 ID/签名/头像 → 发带图动态 → 空动态被拒 → 建档案 → 加条目 → 前台读取 → 调整顺序
 → 相册上传 / 归类 / 进回收站 → 写学习（含换行渲染） → 日记（解锁、一天一篇、当天可改、过期 403、离开即锁）
-→ 退出后后台被挡 → 404。
+→ 学习计时（自定义分钟、跑完计入、放弃不计） → 退出后后台被挡 → 404。
 
 改完必须真的跑，别只看代码。**界面改动还要自己截图看**：跑起来用无头浏览器点一遍，
 至少确认深色、浅色两套主题都没坏。
@@ -200,5 +205,8 @@ mvnw.cmd test
 - 相册：手动拖动排序（现在按文件名自然序，想排就重命名成 `001-`）、回收站的恢复界面（要手动把图移回）、
   原图的校验和、批量上传（一次一张）
 - 图片压缩参数可调、EXIF 方向修正（手机竖拍的图会歪）
+- 学习计时：只有“跑完”才计时长（放弃不算），没有暂停、没有休息阶段、没有长休息；
+  浏览器关掉就收不到提醒（通知是网页发的）；标签页隐藏超过 5 分钟后浏览器会降频，
+  到点提醒最多可能晚一分钟
 - 全文搜索、备份按钮（现在是 `mysqldump` + 拷 `data/uploads`）
 - Docker / 云部署、局域网/手机访问（服务只监听 127.0.0.1）

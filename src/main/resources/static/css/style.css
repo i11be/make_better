@@ -3465,3 +3465,171 @@ html[data-theme="light"] .tree-node:focus-visible .tree-tag {
 .diary-input:focus {
   outline: none;
 }
+
+/* ---------- 学习计时（七段数码管） ---------- */
+
+.timer-card {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 22px 20px 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: radial-gradient(
+    120% 120% at 50% 0%,
+    color-mix(in srgb, var(--accent) 8%, transparent),
+    transparent 68%
+  );
+}
+
+.seg-clock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 78px;
+}
+
+.seg-clock .seg {
+  width: 46px;
+  height: 78px;
+}
+
+.seg-clock .seg rect {
+  fill: color-mix(in srgb, var(--accent) 12%, transparent);
+  transition: fill 0.12s ease;
+}
+
+.seg-clock .seg rect.on {
+  fill: var(--accent);
+  filter: drop-shadow(0 0 7px color-mix(in srgb, var(--accent) 50%, transparent));
+}
+
+.seg-colon {
+  display: grid;
+  gap: 16px;
+  padding: 6px 2px 0;
+}
+
+.seg-colon i {
+  display: block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.85;
+}
+
+.seg-fallback {
+  font-family: var(--font-serif);
+  font-size: 3rem;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+}
+
+.timer-meta {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink-dim);
+}
+
+.timer-actions {
+  margin: 0;
+}
+
+.timer-idle-title {
+  margin: 0;
+  font-size: 0.98rem;
+}
+
+.timer-hint {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink-dim);
+}
+
+.timer-start {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.timer-preset {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.timer-preset input {
+  accent-color: var(--accent);
+}
+
+.timer-preset:has(input:checked) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.timer-custom {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  white-space: nowrap;
+  color: var(--ink-soft);
+}
+
+.timer-custom input {
+  width: 78px;
+  height: 32px;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--bg-soft);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+}
+
+.timer-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 0 0 34px;
+}
+
+.timer-stat {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+}
+
+.timer-stat span {
+  font-size: 11.5px;
+  letter-spacing: 0.16em;
+  color: var(--ink-dim);
+}
+
+.timer-stat b {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+@media (max-width: 620px) {
+  .timer-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

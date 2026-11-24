@@ -44,6 +44,67 @@
     <span class="album-strip-go">进去看看 →</span>
   </a>
 
+  <p class="banner" th:if="${timerMessage != null}" th:text="${timerMessage}">开始计时</p>
+  <p class="banner" th:if="${justSettled > 0}">刚才那段计时已经结束，时长记上了。</p>
+
+  <!-- 正在计时 -->
+  <section class="timer-card" th:if="${timer != null}">
+    <div class="seg-clock" id="seg-clock"
+         th:attr="data-remaining=${remainingSeconds},data-id=${timer.id},data-minutes=${timer.plannedMinutes}">
+      <span class="seg-fallback" th:text="${@viewHelper.clock(remainingSeconds)}">30:00</span>
+    </div>
+    <p class="timer-meta">
+      <span th:text="${'计划 ' + timer.plannedMinutes + ' 分钟'}">30 分钟</span>
+      <span class="sep">·</span>
+      <span th:text="${'开始于 ' + @viewHelper.dateTime(timer.startedAt)}">开始于</span>
+    </p>
+    <form class="timer-actions" th:action="@{/timer/cancel}" method="post"
+          th:attr="data-confirm='放弃这段计时？中间的时间不计入时长。'">
+      <input type="hidden" name="id" th:value="${timer.id}" />
+      <button class="btn btn-small btn-ghost" type="submit">放弃</button>
+    </form>
+  </section>
+
+  <!-- 没在计时 -->
+  <section class="timer-card timer-idle" th:if="${timer == null}">
+    <p class="timer-idle-title">学习计时</p>
+    <p class="timer-hint">跑完会弹系统通知、响一声、标题闪一下。中途放弃不计时长。</p>
+    <form class="timer-start" th:action="@{/timer/start}" method="post">
+      <label class="timer-preset">
+        <input type="radio" name="minutes" value="30" checked />
+        <span>30 分钟</span>
+      </label>
+      <label class="timer-preset">
+        <input type="radio" name="minutes" value="60" />
+        <span>60 分钟</span>
+      </label>
+      <label class="timer-custom">
+        <span>自定义</span>
+        <input type="number" name="customMinutes" min="5" max="180" step="5" aria-label="自定义分钟数" />
+      </label>
+      <button class="btn btn-small" type="submit">开始</button>
+    </form>
+  </section>
+
+  <section class="timer-stats">
+    <div class="timer-stat">
+      <span>今日</span>
+      <b th:text="${@viewHelper.duration(timerStats.today())}">0 分</b>
+    </div>
+    <div class="timer-stat">
+      <span>本周</span>
+      <b th:text="${@viewHelper.duration(timerStats.week())}">0 分</b>
+    </div>
+    <div class="timer-stat">
+      <span>本月</span>
+      <b th:text="${@viewHelper.duration(timerStats.month())}">0 分</b>
+    </div>
+    <div class="timer-stat">
+      <span>累计</span>
+      <b th:text="${@viewHelper.duration(timerStats.total())}">0 分</b>
+    </div>
+  </section>
+
   <section class="block" th:if="${!#strings.isEmpty(nowHtml)}">
     <div class="block-head">
       <h2>现在</h2>

@@ -32,6 +32,32 @@ public class ViewHelper {
         return value == null ? "" : DATE_TIME.format(value);
     }
 
+    /** 秒 → 「1 小时 25 分」，统计栏用 */
+    public String duration(long seconds) {
+        long minutes = Math.round(seconds / 60.0);
+        if (minutes <= 0) {
+            return "0 分";
+        }
+        long hours = minutes / 60;
+        long rest = minutes % 60;
+        if (hours == 0) {
+            return rest + " 分";
+        }
+        return rest == 0 ? hours + " 小时" : hours + " 小时 " + rest + " 分";
+    }
+
+    /** 秒 → 电子钟字符串：25:00 / 1:05:00（没有 JS 时的兜底） */
+    public String clock(long seconds) {
+        long left = Math.max(0, seconds);
+        long hours = left / 3600;
+        long minutes = (left % 3600) / 60;
+        long rest = left % 60;
+        if (hours > 0) {
+            return String.format("%d:%02d:%02d", hours, minutes, rest);
+        }
+        return String.format("%02d:%02d", minutes, rest);
+    }
+
     /** Markdown → 纯文本摘要 */
     public String excerpt(String markdown, int max) {
         if (markdown == null) {

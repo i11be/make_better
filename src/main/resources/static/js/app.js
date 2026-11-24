@@ -190,6 +190,188 @@
     if (gateToggle.checked) window.setTimeout(focusUser, 160);
   }
 
+  // ---------- 学习计时：七段数码管 + 到点提醒 ----------
+  (function () {
+    var clock = document.getElementById('seg-clock');
+    if (!clock) return;
+
+    var remaining = Number(clock.dataset.remaining || '0');
+    var sessionId = clock.dataset.id || '';
+    var planned = Number(clock.dataset.minutes || '30');
+    var meta = document.querySelector('meta[name="_csrf"]');
+    var csrf = meta ? meta.getAttribute('content') : '';
+
+    // 每个数字由哪几段亮着组成：a 上、b 右上、c 右下、d 下、e 左下、f 左上、g 中
+    var SEGMENTS = {
+      0: 'abcdef', 1: 'bc', 2: 'abged', 3: 'abgcd', 4: 'fgbc',
+      5: 'afgcd', 6: 'afgedc', 7: 'abc', 8: 'abcdefg', 9: 'abcdfg'
+    };
+    // 七段的位置（viewBox 42 x 78）
+    var RECTS = {
+      a: [7, 2, 28, 6], b: [35, 8, 6, 27], c: [35, 42, 6, 27],
+      d: [7, 70, 28, 6], e: [1, 42, 6, 27], f: [1, 8, 6, 27], g: [7, 36, 28, 6]
+    };
+
+    var withHours = planned >= 60;
+    var digits = [];
+    clock.innerHTML = '';
+
+    function addDigit() {
+      var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 42 78');
+      svg.setAttribute('class', 'seg');
+      var map = {};
+      Object.keys(RECTS).forEach(function (key) {
+        var box = RECTS[key];
+        var rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', box[0]);
+        rect.setAttribute('y', box[1]);
+        rect.setAttribute('width', box[2]);
+        rect.setAttribute('height', box[3]);
+        rect.setAttribute('rx', '3');
+        svg.appendChild(rect);
+        map[key] = rect;
+      });
+      clock.appendChild(svg);
+      digits.push(map);
+    }
+
+    function addColon() {
+      var colon = document.createElement('span');
+      colon.className = 'seg-colon';
+      colon.innerHTML = '<i></i><i></i>';
+      clock.appendChild(colon);
+    }
+
+    // 60 分钟以上显示 H:MM:SS，否则 MM:SS
+    if (withHours) {
+      addDigit();
+      addColon();
+      addDigit();
+      addDigit();
+      addColon();
+      addDigit();
+      addDigit();
+    } else {
+      addDigit();
+      addDigit();
+      addColon();
+      addDigit();
+      addDigit();
+    }
+
+    function pad(value) {
+      return value < 10 ? '0' + value : String(value);
+    }
+
+    function render(left) {
+      var text;
+      if (withHours) {
+        text = Math.floor(left / 3600) + pad(Math.floor(left % 3600 / 60)) + pad(left % 60);
+      } else {
+        text = pad(Math.floor(left / 60)) + pad(left % 60);
+      }
+      for (var i = 0; i < digits.length; i++) {
+        var lit = SEGMENTS[text.charAt(i)] || '';
+        Object.keys(digits[i]).forEach(function (key) {
+          digits[i][key].classList.toggle('on', lit.indexOf(key) >= 0);
+        });
+      }
+    }
+
+    var deadline = Date.now() + remaining * 1000;
+    var loop = null;
+    var finished = false;
+
+    function tick() {
+      var left = Math.max(0, Math.round((deadline - Date.now()) / 1000));
+      render(left);
+      if (left <= 0 && !finished) {
+        finished = true;
+        window.clearInterval(loop);
+        done();
+      }
+    }
+
+    function done() {
+      fetch('/timer/finish', {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': csrf,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'id=' + encodeURIComponent(sessionId)
+      }).catch(function () { });
+      celebrate();
+      window.setTimeout(function () { window.location.reload(); }, 1600);
+    }
+
+    function celebrate() {
+      var original = document.title;
+      var flip = false;
+      var flash = window.setInterval(function () {
+        flip = !flip;
+        document.title = flip ? '⏰ 时间到' : original;
+      }, 900);
+      window.addEventListener('focus', function stop() {
+        window.clearInterval(flash);
+        document.title = original;
+        window.removeEventListener('focus', stop);
+      });
+
+      try {
+        if (window.Notification && Notification.permission === 'granted') {
+          var note = new Notification('学习计时结束', {
+            body: '这段 ' + planned + ' 分钟跑完了，起来动一动。'
+          });
+          note.onclick = function () {
+            window.focus();
+            note.close();
+          };
+        }
+      } catch (e) {
+        // 通知不可用还有标题和声音
+      }
+
+      try {
+        var Ctx = window.AudioContext || window.webkitAudioContext;
+        var ctx = new Ctx();
+        [0, 260, 520].forEach(function (delay) {
+          var osc = ctx.createOscillator();
+          var gain = ctx.createGain();
+          var at = ctx.currentTime + delay / 1000;
+          osc.type = 'sine';
+          osc.frequency.value = 880;
+          gain.gain.setValueAtTime(0.0001, at);
+          gain.gain.exponentialRampToValueAtTime(0.22, at + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.32);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(at);
+          osc.stop(at + 0.36);
+        });
+      } catch (e) {
+        // 没有音频环境就算了
+      }
+    }
+
+    render(remaining);
+    loop = window.setInterval(tick, 250);
+    tick();
+
+    // 点「开始」时顺手要一次通知权限（必须在用户操作里问）
+    var startForm = document.querySelector('.timer-start');
+    if (startForm && window.Notification && Notification.permission === 'default') {
+      startForm.addEventListener('submit', function () {
+        try {
+          Notification.requestPermission();
+        } catch (e) {
+          // 忽略
+        }
+      });
+    }
+  })();
+
   // ---------- 编辑器 ----------
   var editorForm = document.getElementById('editor-form');
   if (!editorForm) return;
