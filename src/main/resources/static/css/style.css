@@ -3345,3 +3345,123 @@ html[data-theme="light"] .tree-node:focus-visible .tree-tag {
   color: var(--accent);
   white-space: nowrap;
 }
+
+/* ---------- 日记 ---------- */
+
+.diary-list {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line-soft);
+}
+
+.diary-list li {
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.diary-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 18px 4px;
+  color: inherit;
+  text-decoration: none;
+  transition: padding-left 0.18s ease, color 0.18s ease;
+}
+
+.diary-row:hover {
+  padding-left: 10px;
+  color: var(--accent);
+}
+
+.diary-date {
+  font-family: var(--font-serif);
+  font-size: 1.12rem;
+  letter-spacing: 0.01em;
+}
+
+.diary-week {
+  font-size: 12.5px;
+  color: var(--ink-dim);
+}
+
+.diary-now {
+  padding: 1px 8px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+}
+
+.diary-arrow {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--ink-dim);
+}
+
+.diary-row:hover .diary-arrow {
+  color: var(--accent);
+}
+
+.diary-head {
+  margin: 18px 0 4px;
+}
+
+.diary-title {
+  margin: 6px 0;
+  font-family: var(--font-serif);
+  font-size: clamp(1.7rem, 3.4vw, 2.3rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.diary-text {
+  max-width: 720px;
+  margin: 26px 0 10px;
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  line-height: 2.05;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.diary-foot {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 34px 0 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.diary-locked {
+  margin: 30px 0 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line-soft);
+  font-size: 12.5px;
+}
+
+.diary-form {
+  max-width: 760px;
+  margin-top: 18px;
+}
+
+.diary-input {
+  display: block;
+  width: 100%;
+  min-height: calc(100vh - 400px);
+  padding: 18px 2px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  line-height: 2;
+  resize: vertical;
+}
+
+.diary-input:focus {
+  outline: none;
+}

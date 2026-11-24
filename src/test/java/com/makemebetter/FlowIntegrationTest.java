@@ -1,6 +1,9 @@
 package com.makemebetter;
 
 import com.makemebetter.config.RequestLogFilter;
+import com.makemebetter.domain.Entry;
+import com.makemebetter.domain.EntryKind;
+import com.makemebetter.service.EntryService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -15,6 +18,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.LocalDate;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
@@ -43,6 +47,9 @@ class FlowIntegrationTest {
 
     @Autowired
     private RequestLogFilter requestLogFilter;
+
+    @Autowired
+    private EntryService entryService;
 
     @Test
     void 请求日志过滤器默认开着() {
@@ -336,7 +343,7 @@ class FlowIntegrationTest {
                 .andExpect(content().string(containsString("kind-picker")))
                 .andExpect(content().string(containsString("href=\"/admin\"")));
 
-        // 14. 日记：没解锁被挡，解锁后能读
+        // 14. 日记：没解锁被挡，解锁后能写
         mvc.perform(get("/diary").session(session))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/diary/unlock"));
@@ -349,24 +356,68 @@ class FlowIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/diary"));
 
-        MvcResult diary = mvc.perform(post("/admin/entries").session(session).with(csrf())
-                        .param("kind", "diary")
-                        .param("title", "测试日记条目")
-                        .param("bodyMd", "只有我能看。")
-                        .param("entryDate", "2026-01-03"))
+        // 14.1 写今天的日记：日期自动是今天，标题也是日期
+        MvcResult diary = mvc.perform(post("/diary/new").session(session).with(csrf())
+                        .param("body", "只有我能看。"))
                 .andExpect(status().is3xxRedirection())
                 .andReturn();
         String diaryLocation = diary.getResponse().getRedirectedUrl();
         assertNotNull(diaryLocation);
+        assertTrue(diaryLocation.matches("/diary/\\d+\\?ok=saved"), diaryLocation);
         String diaryId = diaryLocation.replaceAll("^/diary/(\\d+).*$", "$1");
 
         mvc.perform(get("/diary/" + diaryId).session(session))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("测试日记条目")));
+                .andExpect(content().string(containsString("只有我能看")))
+                .andExpect(content().string(containsString("改今天的")));
+
+        // 14.2 一天一篇：再建一次跳回同一篇
+        mvc.perform(post("/diary/new").session(session).with(csrf()).param("body", "第二篇"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/diary/" + diaryId + "?ok=exists"));
+
+        // 14.3 当天可以改
+        mvc.perform(post("/diary/" + diaryId + "/edit").session(session).with(csrf())
+                        .param("body", "改过的日记。"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/diary/" + diaryId + "?ok=saved"));
+
+        mvc.perform(get("/diary/" + diaryId).session(session))
+                .andExpect(content().string(containsString("改过的日记")));
+
+        // 14.4 列表只按日期排，今天的带「今天」标记
+        mvc.perform(get("/diary").session(session))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("今天")));
+
+        // 14.5 过了当天：不能改、不能删，详情页也不给按钮
+        Entry oldDiary = entryService.create(EntryKind.DIARY, "旧日记", "很久以前写的。", "", "", "",
+                LocalDate.now().minusDays(3));
+        mvc.perform(get("/diary/" + oldDiary.getId()).session(session))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("只能看")))
+                .andExpect(content().string(not(containsString("改今天的"))));
+
+        mvc.perform(get("/diary/" + oldDiary.getId() + "/edit").session(session))
+                .andExpect(status().isForbidden());
+        mvc.perform(post("/diary/" + oldDiary.getId() + "/edit").session(session).with(csrf())
+                        .param("body", "想改"))
+                .andExpect(status().isForbidden());
+        mvc.perform(post("/diary/" + oldDiary.getId() + "/delete").session(session).with(csrf()))
+                .andExpect(status().isForbidden());
+        // 管理端也不能碰日记
+        mvc.perform(post("/admin/entries/" + oldDiary.getId() + "/delete").session(session).with(csrf()))
+                .andExpect(status().isForbidden());
+
+        // 14.6 离开日记区就重新锁上：看过别的页面，再进日记要密码
+        mvc.perform(get("/study").session(session)).andExpect(status().isOk());
+        mvc.perform(get("/diary").session(session))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/diary/unlock"));
 
         // 15. 学习列表里不该出现日记和动态
         mvc.perform(get("/study").session(session))
-                .andExpect(content().string(not(containsString("测试日记条目"))))
+                .andExpect(content().string(not(containsString("改过的日记"))))
                 .andExpect(content().string(not(containsString("今天去河边走了走"))));
 
         // 16. 改一篇、删一篇

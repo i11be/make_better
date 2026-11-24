@@ -51,15 +51,19 @@ public class AdminController {
 
     // ---------- 新建 ----------
 
-    /** 带 kind 进来就是「只能写这一栏」（学习页的写一篇）；不带 kind 才给三选一 */
+    /** 带 kind 进来就是「只能写这一栏」（学习页的写一篇）；不带 kind 才给二选一 */
     @GetMapping("/new")
     public String createForm(@RequestParam(name = "kind", required = false) String kind, Model model) {
         boolean picker = kind == null || kind.isBlank();
         EntryKind target = EntryKind.fromCode(picker ? EntryKind.STUDY.getCode() : kind);
+        // 日记有自己的入口（/diary/new），不走这个编辑器
+        if (target == EntryKind.DIARY) {
+            return "redirect:/diary/new";
+        }
         model.addAttribute("title", "写一篇");
         model.addAttribute("mode", "new");
         model.addAttribute("picker", picker);
-        model.addAttribute("kinds", EntryKind.values());
+        model.addAttribute("kinds", java.util.List.of(EntryKind.STUDY, EntryKind.FEED));
         model.addAttribute("categories", StudyCategory.values());
         model.addAttribute("formAction", "/admin/entries");
         // 从栏目进来就回栏目，从后台进来才回后台
@@ -90,6 +94,10 @@ public class AdminController {
     @GetMapping("/entries/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
         Entry entry = entries.find(id).orElseThrow(() -> notFound());
+        // 日记有自己的编辑页（还带「当天才能改」的检查）
+        if (entry.getKind() == EntryKind.DIARY) {
+            return "redirect:/diary/" + id + "/edit";
+        }
         model.addAttribute("title", "改一篇");
         model.addAttribute("mode", "edit");
         model.addAttribute("picker", false);
@@ -106,6 +114,9 @@ public class AdminController {
     @PostMapping("/entries/{id}")
     public String update(@PathVariable Long id, @ModelAttribute("form") EntryForm form, Model model) {
         Entry entry = entries.find(id).orElseThrow(() -> notFound());
+        if (entry.getKind() == EntryKind.DIARY) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "日记请在日记页里改。");
+        }
         String error = validate(form);
         if (error != null) {
             return editorWithError(model, "edit", form, error);
@@ -123,6 +134,11 @@ public class AdminController {
 
     @PostMapping("/entries/{id}/delete")
     public String delete(@PathVariable Long id) {
+        Entry entry = entries.find(id).orElseThrow(() -> notFound());
+        // 日记只能在当天、从日记页删；这里一律挡住
+        if (entry.getKind() == EntryKind.DIARY) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "日记请在日记页里删。");
+        }
         entries.delete(id);
         return "redirect:/admin?ok=deleted";
     }

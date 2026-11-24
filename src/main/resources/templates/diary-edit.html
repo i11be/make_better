@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN" data-theme="auto">
+<head th:replace="~{fragments/head :: head(${title})}"></head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="wrap">
+  <a class="back-link" th:href="@{/diary}">← 日记</a>
+
+  <header class="diary-head">
+    <h1 class="diary-title" th:text="${@viewHelper.date(today)}">2026年11月24日</h1>
+    <p class="sub">
+      <span th:text="${@viewHelper.weekday(today)}">星期一</span>
+      <span class="sep">·</span>
+      <span>纯文字，写多少算多少</span>
+    </p>
+  </header>
+
+  <form th:action="${formAction}" method="post" class="diary-form">
+    <textarea name="body" class="diary-input" rows="8" spellcheck="false"
+              th:text="${body}"></textarea>
+
+    <div class="diary-foot">
+      <button class="btn btn-small" type="submit">保存</button>
+      <a class="quiet" th:href="@{/diary}">取消</a>
+    </div>
+  </form>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

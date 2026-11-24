@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN" data-theme="auto">
+<head th:replace="~{fragments/head :: head(${title})}"></head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="wrap">
+  <header class="page-head">
+    <div>
+      <a class="back-link" th:href="@{/}">← 世界树</a>
+      <h1 class="page-title">日记</h1>
+      <p class="sub">只写给自己。一天一篇，过了当天就只能看。</p>
+    </div>
+    <div class="head-actions">
+      <a class="btn btn-small" th:if="${todayEntry == null}" th:href="@{/diary/new}">写今天的日记</a>
+      <a class="btn btn-small btn-ghost" th:if="${todayEntry != null}"
+         th:href="${'/diary/' + todayEntry.id}">看今天的</a>
+      <form th:action="@{/diary/lock}" method="post" class="inline">
+        <button type="submit" class="linklike quiet">锁上</button>
+      </form>
+    </div>
+  </header>
+
+  <p class="banner" th:if="${param.ok != null and param.ok[0] == 'deleted'}">删掉了。</p>
+
+  <p class="empty" th:if="${#lists.isEmpty(entries)}">还没有日记。今天可以写第一篇。</p>
+
+  <ul class="diary-list" th:unless="${#lists.isEmpty(entries)}">
+    <li th:each="e : ${entries}">
+      <a class="diary-row" th:href="${'/diary/' + e.id}">
+        <span class="diary-date" th:text="${@viewHelper.date(e.entryDate)}">2026年11月24日</span>
+        <span class="diary-week" th:text="${@viewHelper.weekday(e.entryDate)}">星期一</span>
+        <span class="diary-now" th:if="${e.entryDate.isEqual(today)}">今天</span>
+        <span class="diary-arrow">→</span>
+      </a>
+    </li>
+  </ul>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN" data-theme="auto">
+<head th:replace="~{fragments/head :: head(${title})}"></head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="wrap">
+  <a class="back-link" th:href="@{/diary}">← 日记</a>
+
+  <header class="diary-head">
+    <h1 class="diary-title" th:text="${@viewHelper.date(entry.entryDate)}">2026年11月24日</h1>
+    <p class="sub">
+      <span th:text="${@viewHelper.weekday(entry.entryDate)}">星期一</span>
+      <span class="sep">·</span>
+      <span th:text="${'写于 ' + @viewHelper.dateTime(entry.createdAt)}">写于</span>
+    </p>
+  </header>
+
+  <p class="banner" th:if="${param.ok != null and param.ok[0] == 'saved'}">存好了。</p>
+  <p class="banner" th:if="${param.ok != null and param.ok[0] == 'exists'}">今天已经写过一篇了。</p>
+
+  <article class="diary-text" th:if="${not #strings.isEmpty(entry.bodyMd)}"
+           th:text="${entry.bodyMd}">正文</article>
+  <p class="empty" th:if="${#strings.isEmpty(entry.bodyMd)}">这天什么都没写。</p>
+
+  <div class="diary-foot" th:if="${editable}">
+    <a class="btn btn-small" th:href="${'/diary/' + entry.id + '/edit'}">改今天的</a>
+    <form th:action="${'/diary/' + entry.id + '/delete'}" method="post" class="inline"
+          th:attr="data-confirm='删掉今天的日记？不能撤回。'">
+      <button type="submit" class="linklike danger">删掉</button>
+    </form>
+  </div>
+
+  <p class="quiet diary-locked" th:unless="${editable}">这天已经过去了，只能看，不能改也不能删。</p>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

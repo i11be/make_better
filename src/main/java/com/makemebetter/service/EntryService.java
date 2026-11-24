@@ -56,6 +56,11 @@ public class EntryService {
         return repository.findByIdAndKind(id, kind);
     }
 
+    /** 某天的日记（一天一篇） */
+    public Optional<Entry> diaryOf(LocalDate date) {
+        return repository.findFirstByKindAndEntryDate(EntryKind.DIARY, date);
+    }
+
     public List<EntryImage> imagesOf(Long entryId) {
         return imageRepository.findByEntryIdOrderBySortAscIdAsc(entryId);
     }

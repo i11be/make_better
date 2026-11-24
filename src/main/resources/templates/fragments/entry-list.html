@@ -1,24 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
 <body>
-<th:block th:fragment="list(items, kind, showExcerpt, emptyText)">
-  <p class="empty" th:if="${#lists.isEmpty(items)}" th:text="${emptyText}">还空着。</p>
-  <ol class="items" th:unless="${#lists.isEmpty(items)}">
-    <li class="item" th:each="e : ${items}">
-      <a class="item-link" th:href="${kind.path + '/' + e.id}">
-        <span class="item-meta">
-          <time th:datetime="${e.entryDate}" th:text="${@viewHelper.date(e.entryDate)}">2026年11月16日</time>
-          <span class="chip" th:if="${not #strings.isEmpty(e.mood)}" th:text="${e.mood}">平静</span>
-        </span>
-        <span class="item-title" th:text="${e.title}">标题</span>
-        <span class="item-excerpt" th:if="${showExcerpt and not #strings.isEmpty(e.bodyMd)}"
-              th:text="${@viewHelper.excerpt(e.bodyMd, 86)}">摘要</span>
-      </a>
-    </li>
-  </ol>
-</th:block>
-
-<!-- 学习列表的一条：分类小标 + 标题 + 摘要，标签单独一行，能点着筛 -->
+<!-- 学习列表的一条：分类小标 + 标题，标签单独一行，能点着筛 -->
 <th:block th:fragment="studyItem(e, catCode, showTag)">
   <li class="item">
     <a class="item-link" th:href="${'/study/' + e.id}">

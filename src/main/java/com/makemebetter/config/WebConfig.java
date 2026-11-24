@@ -24,9 +24,10 @@ public class WebConfig implements WebMvcConfigurer {
                 .addPathPatterns("/**")
                 .excludePathPatterns("/setup", "/error", "/css/**", "/js/**", "/favicon.svg");
 
-        // 日记：登录之后还要解锁
+        // 日记：进出都要过这道锁（进要密码，离开就重新锁上）
         registry.addInterceptor(diaryGate)
-                .addPathPatterns("/diary", "/diary/**")
-                .excludePathPatterns("/diary/unlock", "/diary/lock");
+                .addPathPatterns("/**")
+                .excludePathPatterns("/diary/unlock", "/diary/lock",
+                        "/css/**", "/js/**", "/img/**", "/files/**", "/favicon.svg");
     }
 }

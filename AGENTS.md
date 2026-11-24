@@ -25,7 +25,8 @@
   发布日期保存时自动记，列表能按分类看、按标签分组
 - **档案（archive）**：一个主题一个档案（一本书、一个游戏）。档案本身没有正文、只有名字；
   里面挂很多条目，条目用整页写作台写（Markdown，可以插图），阅读时按左边的目录一条条看
-- **日记（diary）**：最私密，进这一区要**再输一次密码**
+- **日记（diary）**：最私密，**一天一篇、纯文字、不能配图**；创建时日期和时刻自动记，
+  **只有当天能改和删**，过了当天服务端一律 403；进这一区要再输一次密码，**离开就重新锁上**
 - **相册（album）**：图片放 `data/uploads/albums/{图集}/`，新图先进 `_inbox`（待整理），
   在网页上勾选归类；可移到别的图集、可移进 `.trash`。**以文件夹为准，不落数据库**
 - **管理**：写、改、删、改资料、改密码
@@ -94,8 +95,10 @@ src/main/resources/
   application*.yml       通用 / dev(H2) / mysql
   db/migration/          Flyway：V1__init.sql、V2__profile_feed_archive.sql、V3__study_category.sql、
                          V4__entry_body_mediumtext.sql、V5__archive_drop_summary.sql
-  templates/             index.html 世界树、profile、entry/study/feed/diary 各页、
-                         archive/ 档案页、album/ 相册页、admin/ 后台、fragments/ 公共片段
+  templates/             index.html 世界树、profile、entry.html 学习详情、
+                         study.html、diary.html / diary-detail.html / diary-edit.html、
+                         feed.html / feed-detail.html、archive/ 档案页、album/ 相册页、
+                         admin/ 后台、fragments/ 公共片段
   static/css/style.css   全站样式（唯一 CSS 文件）
   static/js/app.js       主题切换、编辑器、发动态选图、大图查看
 src/test/java/           集成测试（见第 8 节）
@@ -127,7 +130,8 @@ V2 曾经因为「先加 CHECK、后改数据」在真库上失败）。
 - 密码：BCrypt；明文绝不落库、绝不进日志
 - 会话：`HttpSession`，`HttpOnly` + `SameSite=Lax`；登录 30 天、日记解锁 30 分钟
 - 守卫：**全站都要登录**（`/login`、`/setup`、`/error` 和静态资源除外），没有「能看不能写」的中间态；
-  `/diary/**` 在登录之上还要日记密码解锁
+  `/diary/**` 在登录之上还要日记密码解锁，而且**离开日记区（任何非日记的 GET）就立刻锁回去**，
+  下次进日记要重新输密码；保存/删除这些 POST 不算离开
 - 登录页：整屏海报，点左侧那块橙色芯片才展开输入框（`#gate-open` 这个 checkbox 控制）；
   密码错了面板保持展开，退出后收起。芯片热区钉在图片坐标上，见 style.css 的 `.gate-stage`
 - 上传：只收 `image/*`，单张 ≤10MB；动态一次最多 9 张是**前端**限制（`app.js` 里的 `MAX_PHOTOS`），
@@ -168,7 +172,8 @@ mvnw.cmd test
 
 集成测试（MockMvc + H2 的 MySQL 兼容模式）覆盖：
 建账号 → 登录 → 改 ID/签名/头像 → 发带图动态 → 空动态被拒 → 建档案 → 加条目 → 前台读取 → 调整顺序
-→ 相册上传 / 归类 / 进回收站 → 写学习（含换行渲染） → 日记被挡 → 解锁 → 改 → 删 → 退出后后台被挡 → 404。
+→ 相册上传 / 归类 / 进回收站 → 写学习（含换行渲染） → 日记（解锁、一天一篇、当天可改、过期 403、离开即锁）
+→ 退出后后台被挡 → 404。
 
 改完必须真的跑，别只看代码。**界面改动还要自己截图看**：跑起来用无头浏览器点一遍，
 至少确认深色、浅色两套主题都没坏。
@@ -179,7 +184,9 @@ mvnw.cmd test
 ## 9. 内容与写作约定
 
 - 四条主线：`study` / `feed` / `diary` / `archive`；相册是第五条（文件系统，不是条目）
-- 动态的文字是**纯文本**（保留换行，不渲染 Markdown）；学习、日记、档案条目是 Markdown
+- 动态和**日记**的文字是**纯文本**（保留换行，不渲染 Markdown）；学习和档案条目是 Markdown
+- 日记一天一篇，`entry_date` 自动取当天、`created_at` 自动记时刻；标题就是日期，没有心情和标签；
+  只有 `entry_date` 等于今天的那篇能改能删，其余服务端 403
 - Markdown 的**单个换行就换行**：`MarkdownService` 配了 `softbreak("<br />")`，和 CommonMark 默认不同，
   这是有意的（写笔记时一个回车就该换行），别改回去
 - 日记不生成公开链接、不导出、不分享
