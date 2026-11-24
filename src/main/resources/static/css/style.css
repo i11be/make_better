@@ -3633,3 +3633,51 @@ html[data-theme="light"] .tree-node:focus-visible .tree-tag {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* 计时结束的页面内提示（系统通知没弹出来时的兜底） */
+.timer-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 14px 18px;
+  border: 1px solid var(--accent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bg) 92%, var(--accent));
+  box-shadow: 0 12px 40px rgb(0 0 0 / 45%);
+  transform: translateX(-50%);
+  animation: timer-toast-in 0.25s ease;
+}
+
+.timer-toast-text {
+  display: grid;
+  gap: 3px;
+}
+
+.timer-toast-text b {
+  font-size: 0.98rem;
+  color: var(--accent);
+}
+
+.timer-toast-text span {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.timer-hint-warn {
+  color: var(--accent);
+}
+
+@keyframes timer-toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}

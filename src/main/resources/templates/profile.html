@@ -69,6 +69,7 @@
   <section class="timer-card timer-idle" th:if="${timer == null}">
     <p class="timer-idle-title">学习计时</p>
     <p class="timer-hint">跑完会弹系统通知、响一声、标题闪一下。中途放弃不计时长。</p>
+    <p class="timer-hint timer-hint-warn" id="notify-hint" hidden></p>
     <form class="timer-start" th:action="@{/timer/start}" method="post">
       <label class="timer-preset">
         <input type="radio" name="minutes" value="30" checked />

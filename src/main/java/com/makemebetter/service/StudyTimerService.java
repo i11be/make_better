@@ -75,8 +75,8 @@ public class StudyTimerService {
         sessions.findById(id)
                 .filter(s -> s.getStatus() == SessionStatus.RUNNING)
                 .ifPresent(s -> {
-                    LocalDateTime now = LocalDateTime.now();
-                    s.markDone(now.isBefore(s.plannedEnd()) ? s.plannedEnd() : now);
+                    // 用“真正结束的那一刻”记账，别写成计划结束时间（那可能在未来）
+                    s.markDone(LocalDateTime.now());
                     sessions.save(s);
                 });
     }

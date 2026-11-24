@@ -303,7 +303,34 @@
         body: 'id=' + encodeURIComponent(sessionId)
       }).catch(function () { });
       celebrate();
-      window.setTimeout(function () { window.location.reload(); }, 1600);
+      showToast();
+    }
+
+    /** 页面里也能看到「时间到」，不依赖系统通知 */
+    function showToast() {
+      var toast = document.createElement('div');
+      toast.className = 'timer-toast';
+
+      var text = document.createElement('div');
+      text.className = 'timer-toast-text';
+      var title = document.createElement('b');
+      title.textContent = '时间到';
+      var sub = document.createElement('span');
+      sub.textContent = '这段 ' + planned + ' 分钟跑完了，起来动一动。';
+      text.appendChild(title);
+      text.appendChild(sub);
+
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'btn btn-small';
+      button.textContent = '知道了';
+      button.addEventListener('click', function () {
+        window.location.reload();
+      });
+
+      toast.appendChild(text);
+      toast.appendChild(button);
+      document.body.appendChild(toast);
     }
 
     function celebrate() {
@@ -359,16 +386,28 @@
     loop = window.setInterval(tick, 250);
     tick();
 
-    // 点「开始」时顺手要一次通知权限（必须在用户操作里问）
+    // 点「开始」时先要通知权限：等用户选完再提交表单
+    // （如果一边请求一边提交，页面马上跳走，授权框会被取消，权限一直是 default，
+    //  到点就只能听到声音、看不到弹窗 —— 之前就是这个坑）
     var startForm = document.querySelector('.timer-start');
-    if (startForm && window.Notification && Notification.permission === 'default') {
-      startForm.addEventListener('submit', function () {
-        try {
-          Notification.requestPermission();
-        } catch (e) {
-          // 忽略
+    if (startForm && window.Notification) {
+      startForm.addEventListener('submit', function (event) {
+        if (Notification.permission !== 'default') {
+          return;
         }
+        event.preventDefault();
+        var go = function () {
+          startForm.submit();
+        };
+        Notification.requestPermission().then(go, go);
       });
+    }
+
+    // 已经被拒过一次：在页面上说清楚，别让人等到点才发现没弹窗
+    var notifyHint = document.getElementById('notify-hint');
+    if (notifyHint && window.Notification && Notification.permission === 'denied') {
+      notifyHint.textContent = '浏览器通知被拒绝了，到点只在页面里提示。点地址栏左边的小锁可以改回来。';
+      notifyHint.hidden = false;
     }
   })();
 
