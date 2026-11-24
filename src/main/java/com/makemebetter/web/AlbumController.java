@@ -53,6 +53,19 @@ public class AlbumController {
         return "album/detail";
     }
 
+    /** 浏览器认不了的格式（HEIC 等）转出来的 JPEG 大图，给灯箱用 */
+    @GetMapping("/view/{name}/{file}")
+    public ResponseEntity<Resource> view(@PathVariable String name, @PathVariable String file) {
+        Path path = albums.view(name, file);
+        if (path == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_JPEG)
+                .cacheControl(CacheControl.maxAge(Duration.ofDays(7)).cachePrivate())
+                .body(new FileSystemResource(path));
+    }
+
     /** 缩略图：第一次访问时现生成，之后直接读 */
     @GetMapping("/thumb/{name}/{file}")
     public ResponseEntity<Resource> thumb(@PathVariable String name, @PathVariable String file) {

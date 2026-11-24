@@ -16,7 +16,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 /**
@@ -46,16 +48,23 @@ public class AlbumService {
     private static final int THUMB_WIDTH = 800;
     private static final long MAX_BYTES = 10L * 1024 * 1024;
     private static final long MAX_PIXELS = 40_000_000L;
-    private static final Set<String> EXT = Set.of("jpg", "jpeg", "png", "gif", "webp");
+    private static final Set<String> EXT = Set.of("jpg", "jpeg", "png", "gif", "webp", "heic", "heif");
     /** Windows / URL 里会出事的字符 */
     private static final Pattern BAD_CHARS = Pattern.compile("[\\\\/:*?\"<>|\\p{Cntrl}]");
 
+    private static final int VIEW_WIDTH = 2000;
+    /** 浏览器自己认得的格式（嗅文件头判断，不能只看扩展名：HEIC 经常被存成 .jpg） */
+    private final Map<String, Boolean> webFormats = new ConcurrentHashMap<>();
+
     private final Path root;
     private final ImageTools images;
+    private final ImageConverter converter;
 
-    public AlbumService(@Value("${app.upload-dir:./data/uploads}") String dir, ImageTools images) {
+    public AlbumService(@Value("${app.upload-dir:./data/uploads}") String dir, ImageTools images,
+                        ImageConverter converter) {
         this.root = Paths.get(dir).toAbsolutePath().normalize().resolve("albums");
         this.images = images;
+        this.converter = converter;
     }
 
     // ---------- 读 ----------
@@ -135,8 +144,10 @@ public class AlbumService {
         for (String name : names) {
             Path file = dir.resolve(name);
             try {
-                photos.add(new Photo(name,
-                        "/files/albums/" + encode(album) + "/" + encode(name),
+                String url = isWebFormat(file)
+                        ? "/files/albums/" + encode(album) + "/" + encode(name)
+                        : "/album/view/" + encode(album) + "/" + encode(name);
+                photos.add(new Photo(name, url,
                         "/album/thumb/" + encode(album) + "/" + encode(name),
                         Files.size(file)));
             } catch (IOException ignored) {
@@ -243,7 +254,10 @@ public class AlbumService {
         return moved;
     }
 
-    /** 缩略图：没有就现生成一张 800px 宽的；生成不了（比如 webp）就退回原图 */
+    /**
+     * 缩略图：没有就现生成一张 800px 宽的。
+     * ImageIO 解不了的（HEIC 这类）先用 ffmpeg 转一张 JPEG，再缩；实在转不了就退回原图。
+     */
     public Path thumb(String album, String name) {
         Path dir = folder(album);
         if (dir == null) {
@@ -261,7 +275,15 @@ public class AlbumService {
         try {
             BufferedImage image = ImageIO.read(src.toFile());
             if (image == null) {
-                return src;
+                // JDK 解不了：借 ffmpeg 转一张大图，再缩
+                Path view = ensureViewFile(dir, name);
+                if (view == null) {
+                    return src;
+                }
+                image = ImageIO.read(view.toFile());
+                if (image == null) {
+                    return src;
+                }
             }
             Files.createDirectories(thumbDir);
             Files.write(thumb, images.toJpeg(images.fitWidth(image, THUMB_WIDTH), 0.82f));
@@ -269,6 +291,93 @@ public class AlbumService {
         } catch (IOException | RuntimeException e) {
             return src;
         }
+    }
+
+    /** 给浏览器看得懂的大图：web 格式直接给原图，HEIC 这类给转好的 JPEG */
+    public Path view(String album, String name) {
+        Path dir = folder(album);
+        if (dir == null) {
+            return null;
+        }
+        Path src = safeResolve(dir, name);
+        if (src == null || isWebFormat(src)) {
+            return null;
+        }
+        return ensureViewFile(dir, name);
+    }
+
+    /** 生成（或复用）转好的大图：_thumbs/{名字}_v.jpg，最长边 2000 */
+    private Path ensureViewFile(Path dir, String name) {
+        Path thumbDir = dir.resolve(THUMBS);
+        Path view = thumbDir.resolve(baseOf(name) + "_v.jpg");
+        if (Files.isRegularFile(view)) {
+            return view;
+        }
+        Path src = safeResolve(dir, name);
+        if (src == null) {
+            return null;
+        }
+        Path raw = thumbDir.resolve(baseOf(name) + "_raw.jpg");
+        Path converted = converter.toJpeg(src, raw).orElse(null);
+        if (converted == null) {
+            return null;
+        }
+        try {
+            BufferedImage image = ImageIO.read(converted.toFile());
+            if (image == null) {
+                return null;
+            }
+            Files.createDirectories(thumbDir);
+            Files.write(view, images.toJpeg(images.fitWidth(image, VIEW_WIDTH), 0.86f));
+            return view;
+        } catch (IOException | RuntimeException e) {
+            return null;
+        } finally {
+            try {
+                Files.deleteIfExists(raw);
+            } catch (IOException ignored) {
+                // 临时文件删不掉无所谓
+            }
+        }
+    }
+
+    /**
+     * 这个文件浏览器能不能直接显示。不能只看扩展名：iPhone 的 HEIC 经常被存成 .jpg，
+     * 所以读文件头判断。
+     */
+    private boolean isWebFormat(Path file) {
+        String key = file.getFileName().toString();
+        Boolean cached = webFormats.get(key);
+        if (cached != null) {
+            return cached;
+        }
+        boolean web = sniffsAsWebImage(file);
+        webFormats.put(key, web);
+        return web;
+    }
+
+    private static boolean sniffsAsWebImage(Path file) {
+        byte[] head = new byte[12];
+        try (var in = Files.newInputStream(file)) {
+            if (in.readNBytes(head, 0, head.length) < head.length) {
+                return false;
+            }
+        } catch (IOException e) {
+            return false;
+        }
+        int b0 = head[0] & 0xFF;
+        int b1 = head[1] & 0xFF;
+        if (b0 == 0xFF && b1 == 0xD8) {
+            return true;   // JPEG
+        }
+        if (b0 == 0x89 && head[1] == 'P' && head[2] == 'N' && head[3] == 'G') {
+            return true;   // PNG
+        }
+        String ascii = new String(head, java.nio.charset.StandardCharsets.ISO_8859_1);
+        if (ascii.startsWith("GIF")) {
+            return true;
+        }
+        return ascii.startsWith("RIFF") && ascii.startsWith("WEBP", 8);
     }
 
     // ---------- 名字与路径 ----------
@@ -365,8 +474,9 @@ public class AlbumService {
     private void deleteThumb(Path dir, String name) {
         try {
             Files.deleteIfExists(dir.resolve(THUMBS).resolve(baseOf(name) + "_s.jpg"));
+            Files.deleteIfExists(dir.resolve(THUMBS).resolve(baseOf(name) + "_v.jpg"));
         } catch (IOException ignored) {
-            // 缩略图删不掉无所谓，下次会重新生成
+            // 衍生文件删不掉无所谓，下次会重新生成
         }
     }
 
@@ -394,6 +504,10 @@ public class AlbumService {
         }
         BufferedImage image = images.read(bytes);
         if (image == null) {
+            // ImageIO 解不了：HEIC 可以留着，显示时再用 ffmpeg 转
+            if (looksLikeHeif(bytes)) {
+                return;
+            }
             throw new IllegalArgumentException("这张图读不出来，换一张试试");
         }
         long pixels = (long) image.getWidth() * image.getHeight();
@@ -439,5 +553,19 @@ public class AlbumService {
             }
         }
         return Integer.compare(a.length() - i, b.length() - j);
+    }
+
+    /** ftyp box 里的 brand 是 heic / mif1 / msf1 / avif 之类，说明是 HEIF 家族 */
+    private static boolean looksLikeHeif(byte[] bytes) {
+        if (bytes.length < 12) {
+            return false;
+        }
+        String ascii = new String(bytes, 4, 8, StandardCharsets.ISO_8859_1);
+        if (!ascii.startsWith("ftyp")) {
+            return false;
+        }
+        String brand = ascii.substring(4);
+        return brand.startsWith("hei") || brand.equals("mif1") || brand.equals("msf1")
+                || brand.startsWith("avi");
     }
 }

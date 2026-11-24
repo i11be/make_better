@@ -12,6 +12,9 @@
 3. **只问不改。** 用户只是在问、在聊想法时，就只回答，不动仓库。
 4. **跑偏就停。** 执行中发现方案得改，停下来重新说方案，再等指令。
 5. 例外只有一种：用户直接点名让做的那件小事（比如「把这条写进 AGENTS.md」），可以当场做。
+6. **改了规矩要留痕**：如果用更好的写法必须破这条规范（换库、加依赖、改架构），
+   先把「为什么、代价、替代方案」提出来，用户同意后再动手，并且**同一次改动里把本文件改掉**。
+   用户已经给过这个授权：可以提，但要等点头。
 
 ## 1. 项目是什么
 
@@ -44,7 +47,8 @@
 | 视图 | **Thymeleaf** 服务端渲染 + 手写 CSS + 少量原生 JS，无前端框架、无 Node 构建链 |
 | 安全 | **Spring Security**：表单登录、BCrypt、HttpSession 会话 |
 | 数据库 | **MySQL 8**（`utf8mb4`，库 `make_me_better`，账号 `mmb`）+ **Spring Data JPA** + **Flyway** 管表结构；`dev` profile 可切 H2 文件库离线跑 |
-| 图片 | 存本地磁盘 `data/uploads`（数据库只存相对路径），用 JDK 自带 `ImageIO` 处理，**不引第三方图像库** |
+| 图片 | 存本地磁盘 `data/uploads`（数据库只存相对路径），用 JDK 自带 `ImageIO` 处理；
+**例外**：浏览器不认的格式（HEIC/AVIF）借系统里的 `ffmpeg` 转一张 JPEG 显示副本，原图不动 |
 | Markdown | **commonmark-java**（默认不渲染裸 HTML） |
 | 端口 | 默认 `8090`，只监听 `127.0.0.1`（局域网里连不上，换网络也不影响自己用） |
 
@@ -90,7 +94,7 @@ src/main/java/com/makemebetter/
   repository/            JPA 仓储（唯一写查询的地方）
   service/               EntryService、StudyService、FeedService、ArchiveService、AlbumService、SettingService、
                          StudyTimerService（学习计时）、FileStorage（落盘）、ImageTools（裁图/缩略图）、
-                         DiaryGate、MarkdownService、ViewHelper
+                         ImageConverter（用 ffmpeg 把 HEIC 转 JPEG）、DiaryGate、MarkdownService、ViewHelper
   web/                   控制器（Auth/Home/Entry/Feed/Diary/Archive/Album/Timer/File/Admin·AdminArchive·AdminSettings）、
                          两个拦截器、GlobalModelAttributes、form/
 src/main/resources/
@@ -123,8 +127,9 @@ src/test/java/           集成测试（见第 8 节）
 - `study_sessions` — `id, started_at, planned_minutes, ended_at, status(RUNNING|DONE|CANCELLED)`
   - 一次计时一条；主页四段统计只累加 `DONE`，按 `ended_at` 的日期归到今日/本周（周一起）/本月/累计
   - 页面关掉也不会丢：读主页时把「过了计划时间还挂着 RUNNING」的补记成 DONE
-- **相册没有表**：`data/uploads/albums/{图集}/` 就是图集，`_inbox` 是待整理，`.trash` 是回收站，
-  `_thumbs` 是自动生成的缩略图；网页上的「归类」就是移动文件
+- **相册没有表**：`data/uploads/albums/{图集}/` 就是图集，`_inbox` 是待整理，`.trash` 是回收站；
+  `_thumbs/` 里有两类衍生文件：`{名字}_s.jpg` 是 800px 缩略图，`{名字}_v.jpg` 是 HEIC 转出来的 2000px 大图
+  （原图永远不动，删掉 `_thumbs` 会自动重建）
 
 改表结构：只加新的 `V{n}__*.sql`，**不许改历史脚本**。
 **迁移脚本必须在「有数据」的真实 MySQL 上跑一遍**（H2 空库跑通不代表没问题：
@@ -141,8 +146,11 @@ V2 曾经因为「先加 CHECK、后改数据」在真库上失败）。
   密码错了面板保持展开，退出后收起。芯片热区钉在图片坐标上，见 style.css 的 `.gate-stage`
 - 上传：只收 `image/*`，单张 ≤10MB；动态一次最多 9 张是**前端**限制（`app.js` 里的 `MAX_PHOTOS`），
   服务端不卡张数；用 ImageIO 解码校验，读不出来就拒绝
-- 相册上传另有一套：扩展名白名单 jpg/jpeg/png/gif/webp、≤10MB、解码校验 + ≤40MP、
-  文件名去掉 `\ / : * ? " < > |` 和控制字符、重名加 `-2` 不覆盖、删除只移到 `.trash/`
+- 相册上传另有一套：扩展名白名单 jpg/jpeg/png/gif/webp/heic/heif、≤10MB、解码校验 + ≤40MP
+  （HEIC 只看文件头，显示时用 ffmpeg 转）、文件名去掉 `\ / : * ? " < > |` 和控制字符、
+  重名加 `-2` 不覆盖、删除只移到 `.trash/`
+- 浏览器认不认某个文件，按**文件头**判断而不是扩展名：iPhone 的 HEIC 常被存成 `.jpg`，
+  只按扩展名会被当成 JPEG 直接给浏览器，结果是一块灰色
 - 图片输出：`/files/{*path}` 只认落在 upload 目录内的文件，`..` 越界一律 404；
   响应头 `Cache-Control: private`，别改成 public（私人图片不该进共享缓存）
 - CSRF：Spring Security 默认开启，表单用 `th:action` 会自动带 token，不许关
@@ -205,6 +213,7 @@ mvnw.cmd test
 - 相册：手动拖动排序（现在按文件名自然序，想排就重命名成 `001-`）、回收站的恢复界面（要手动把图移回）、
   原图的校验和、批量上传（一次一张）
 - 图片压缩参数可调、EXIF 方向修正（手机竖拍的图会歪）
+- HEIC 转 JPEG 依赖本机的 `ffmpeg`（配置项 `app.ffmpeg`）；没装的话 HEIC 只会显示成灰块
 - 学习计时：只有“跑完”才计时长（放弃不算），没有暂停、没有休息阶段、没有长休息；
   浏览器关掉就收不到提醒（通知是网页发的）；标签页隐藏超过 5 分钟后浏览器会降频，
   到点提醒最多可能晚一分钟。系统通知要用户授权，被拒时只剩页面内的提示和声音

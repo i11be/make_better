@@ -40,5 +40,7 @@ app:
   diary-unlock-minutes: 30
   # 每个请求打一行日志（GET /album → 200 · 12ms）；不想看就改成 false
   request-log: true
+  # 浏览器不认的图片（HEIC/AVIF）用这个命令转成 JPEG；写全路径也行
+  ffmpeg: ffmpeg
   # 头像和动态图片放这里（数据库只存相对路径）
   upload-dir: ./data/uploads
