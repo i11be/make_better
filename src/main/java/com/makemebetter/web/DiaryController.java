@@ -69,12 +69,6 @@ public class DiaryController {
         return "redirect:/diary";
     }
 
-    @PostMapping("/lock")
-    public String lock(HttpServletRequest request) {
-        diaryGate.lock(request.getSession(false));
-        return "redirect:/";
-    }
-
     // ---------- 看 ----------
 
     @GetMapping

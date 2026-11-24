@@ -27,7 +27,7 @@ public class WebConfig implements WebMvcConfigurer {
         // 日记：进出都要过这道锁（进要密码，离开就重新锁上）
         registry.addInterceptor(diaryGate)
                 .addPathPatterns("/**")
-                .excludePathPatterns("/diary/unlock", "/diary/lock",
+                .excludePathPatterns("/diary/unlock",
                         "/css/**", "/js/**", "/img/**", "/files/**", "/favicon.svg");
     }
 }
